@@ -1,0 +1,21 @@
+option java_package = "org.tomass.protobuf.dota";
+option cc_generic_services = false;
+
+message NetMessageSplitscreenUserChanged {
+	optional uint32 slot = 1;
+}
+
+message NetMessageConnectionClosed {
+	optional uint32 reason = 1;
+}
+
+message NetMessageConnectionCrashed {
+	optional uint32 reason = 1;
+}
+
+message NetMessagePacketStart {
+}
+
+message NetMessagePacketEnd {
+}
+
