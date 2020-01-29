@@ -16,8 +16,6 @@ public class BaseCommonController {
 
     private final Logger log = LoggerFactory.getLogger(BaseCommonController.class);
 
-    // https://spring.io/guides/tutorials/bookmarks/
-
     private static final String PARAMETER_SPLIT = ";";
     private static final String VARARG_SPLIT = ",";
 

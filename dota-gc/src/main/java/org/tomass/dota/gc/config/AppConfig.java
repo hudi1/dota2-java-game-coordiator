@@ -1,92 +1,102 @@
 package org.tomass.dota.gc.config;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.Assert;
+
 public class AppConfig {
 
-    private String user;
+    private Map<String, String> uzivateleHesla = new ConcurrentHashMap<>();
+    private Map<String, String> uzivateleRole = new ConcurrentHashMap<>();
 
-    private String pass;
+    private Map<String, SteamClientConfig> clients;
+    private List<Long> steamIdAdmins;
 
-    private String authCode;
+    public long refreshDuration;
 
-    private String twoFactorAuth;
-
-    private String loginKey;
-
-    private String sentry;
-
-    private boolean connectOnStart;
-
-    private boolean reconnectOnDisconnect;
-
-    public String getUser() {
-        return user;
+    public AppConfig() {
+        clients = new ConcurrentHashMap<String, SteamClientConfig>();
+        steamIdAdmins = new ArrayList<>();
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public Map<String, String> getUzivateleHesla() {
+        return uzivateleHesla;
     }
 
-    public String getPass() {
-        return pass;
+    public void setUzivateleHesla(Map<String, String> uzivateleHesla) {
+        this.uzivateleHesla = uzivateleHesla;
     }
 
-    public void setPass(String pass) {
-        this.pass = pass;
+    public Map<String, String> getUzivateleRole() {
+        return uzivateleRole;
     }
 
-    public String getAuthCode() {
-        return authCode;
+    public void setUzivateleRole(Map<String, String> uzivateleRole) {
+        this.uzivateleRole = uzivateleRole;
     }
 
-    public void setAuthCode(String authCode) {
-        this.authCode = authCode;
+    public void pridejUzivatel(String uzivatel, String heslo) {
+        Assert.notNull(uzivatel, "uzivatel je pozadovan");
+        Assert.notNull(heslo, "heslo je pozadovano");
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+        String hashedPassword = passwordEncoder.encode(heslo);
+        uzivateleHesla.put(uzivatel, hashedPassword);
     }
 
-    public String getTwoFactorAuth() {
-        return twoFactorAuth;
+    public void vymazUzivatel(String uzivatel) {
+        Assert.notNull(uzivatel, "uzivatel je pozadovan");
+        uzivateleHesla.remove(uzivatel);
+        uzivateleRole.remove(uzivatel);
     }
 
-    public void setTwoFactorAuth(String twoFactorAuth) {
-        this.twoFactorAuth = twoFactorAuth;
+    public void pridejUzivatelRole(String uzivatel, String... role) {
+        Assert.notNull(uzivatel, "uzivatel je pozadovan");
+        String[] _role = uzivateleRole.containsKey(uzivatel) ? uzivateleRole.get(uzivatel).split(",") : new String[] {};
+        Set<String> roleSet = new HashSet<>();
+        roleSet.addAll(Arrays.asList(_role));
+        roleSet.addAll(Arrays.asList(role));
+        uzivateleRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
     }
 
-    public String getLoginKey() {
-        return loginKey;
+    public void vymazUzivatelRole(String uzivatel, String... role) {
+        Assert.notNull(uzivatel, "uzivatel je pozadovan");
+        String[] _role = uzivateleRole.containsKey(uzivatel) ? uzivateleRole.get(uzivatel).split(",") : new String[] {};
+        Set<String> roleSet = new HashSet<>();
+        roleSet.addAll(Arrays.asList(_role));
+        roleSet.removeAll(Arrays.asList(role));
+        uzivateleRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
     }
 
-    public void setLoginKey(String loginKey) {
-        this.loginKey = loginKey;
+    public Map<String, SteamClientConfig> getClients() {
+        return clients;
     }
 
-    public String getSentry() {
-        return sentry;
+    public void setClients(Map<String, SteamClientConfig> clients) {
+        this.clients = clients;
     }
 
-    public void setSentry(String sentry) {
-        this.sentry = sentry;
+    public List<Long> getSteamIdAdmins() {
+        return steamIdAdmins;
     }
 
-    public boolean isConnectOnStart() {
-        return connectOnStart;
+    public void setSteamIdAdmins(List<Long> steamIdAdmins) {
+        this.steamIdAdmins = steamIdAdmins;
     }
 
-    public void setConnectOnStart(boolean connectOnStart) {
-        this.connectOnStart = connectOnStart;
+    public long getRefreshDuration() {
+        return refreshDuration;
     }
 
-    public boolean isReconnectOnDisconnect() {
-        return reconnectOnDisconnect;
-    }
-
-    public void setReconnectOnDisconnect(boolean reconnectOnDisconnect) {
-        this.reconnectOnDisconnect = reconnectOnDisconnect;
-    }
-
-    @Override
-    public String toString() {
-        return "AppConfig [user=" + user + ", pass=*****" + ", authCode=" + authCode + ", twoFactorAuth="
-                + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", connectOnStart=" + connectOnStart
-                + ", reconnectOnDisconnect=" + reconnectOnDisconnect + "]";
+    public void setRefreshDuration(long refreshDuration) {
+        this.refreshDuration = refreshDuration;
     }
 
 }

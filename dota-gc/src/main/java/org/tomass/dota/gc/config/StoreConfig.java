@@ -9,7 +9,7 @@ public class StoreConfig {
 
     @Bean
     @ConfigurationProperties(prefix = "config")
-    public AppConfig config() {
+    public AppConfig appConfig() {
         AppConfig config = new AppConfig();
         return config;
     }

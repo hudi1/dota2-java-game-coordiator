@@ -1,4 +1,4 @@
-package org.tomass.dota.gc;
+package org.tomass.dota.gc.clients;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,22 +12,11 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
-
-import javax.annotation.PostConstruct;
+import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.web.WebApplicationInitializer;
-import org.tomass.dota.gc.config.AppConfig;
-import org.tomass.dota.gc.handlers.DotaGCHandler;
-import org.tomass.dota.gc.rest.BaseCommonController;
-import org.tomass.dota.gc.wrappers.CallbackManagerWrapper;
-import org.tomass.dota.gc.wrappers.SteamClientWrapper;
+import org.tomass.dota.gc.config.SteamClientConfig;
 
 import in.dragonbra.javasteam.enums.EFriendRelationship;
 import in.dragonbra.javasteam.enums.EPersonaState;
@@ -44,41 +33,39 @@ import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoggedOffCallbac
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoggedOnCallback;
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoginKeyCallback;
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.UpdateMachineAuthCallback;
+import in.dragonbra.javasteam.steam.steamclient.SteamClient;
+import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackManager;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.ConnectedCallback;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.DisconnectedCallback;
 
-@EnableAsync
-@SpringBootApplication
-public class DotaGCApplication extends SpringBootServletInitializer implements WebApplicationInitializer {
+public class CommonSteamClient extends SteamClient {
 
-    private final Logger log = LoggerFactory.getLogger(BaseCommonController.class);
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Autowired
-    private AppConfig config;
+    protected SteamClientConfig config;
 
-    @Autowired
-    private CallbackManagerWrapper manager;
+    protected SteamUser steamUser;
 
-    @Autowired
-    private SteamClientWrapper steamClient;
+    protected SteamFriends steamFriends;
 
-    @Autowired
-    private DotaGCHandler dotaGCHandler;
+    protected CallbackManager manager;
 
-    private SteamUser steamUser;
+    protected boolean running;
 
-    private SteamFriends steamFriends;
+    protected boolean logged;
 
-    public static void main(String[] args) {
-        // LogManager.addListener(new DefaultLogListener());
-        SpringApplication.run(DotaGCApplication.class, args);
+    private CompletableFuture<Void> managerLoop;
+
+    public CommonSteamClient(SteamClientConfig config) {
+        this.config = config;
+        init();
     }
 
-    @PostConstruct
-    public void init() {
-        steamUser = steamClient.getHandler(SteamUser.class);
-        steamFriends = steamClient.getHandler(SteamFriends.class);
+    protected void init() {
+        steamUser = getHandler(SteamUser.class);
+        steamFriends = getHandler(SteamFriends.class);
 
+        manager = new CallbackManager(this);
         manager.subscribe(ConnectedCallback.class, this::onConnected);
         manager.subscribe(DisconnectedCallback.class, this::onDisconnected);
 
@@ -90,17 +77,10 @@ public class DotaGCApplication extends SpringBootServletInitializer implements W
 
         manager.subscribe(AccountInfoCallback.class, this::onAccountInfo);
         manager.subscribe(FriendsListCallback.class, this::onFriendList);
-
-        manager.setRunning(true);
-        manager.callCallbacks();
-
-        if (config.isConnectOnStart()) {
-            steamClient.connect();
-        }
     }
 
     private void onConnected(ConnectedCallback callback) {
-        log.info("Connected to Steam! Logging in " + config.getUser() + "...");
+        logger.info("Connected to Steam! Logging in " + config.getUser() + "...");
 
         LogOnDetails details = new LogOnDetails();
         details.setUsername(config.getUser());
@@ -131,44 +111,41 @@ public class DotaGCApplication extends SpringBootServletInitializer implements W
     }
 
     private void onDisconnected(DisconnectedCallback callback) {
-        if (config.isReconnectOnDisconnect()) {
-
-            log.info("Disconnected from Steam, reconnecting in 5...");
-
+        if (config.isReconnectOnDisconnect() && logged) {
+            logger.info("Disconnected from Steam, reconnecting in 5...");
             try {
                 Thread.sleep(5000L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            steamClient.connect();
+            connect();
         } else {
-            log.info("Disconnected from Steam");
+            logger.info("Disconnected from Steam");
         }
     }
 
-    private void onLoggedOn(LoggedOnCallback callback) {
+    protected void onLoggedOn(LoggedOnCallback callback) {
         boolean isSteamGuard = callback.getResult() == EResult.AccountLogonDenied;
         boolean is2Fa = callback.getResult() == EResult.AccountLoginDeniedNeedTwoFactor;
 
         if (isSteamGuard || is2Fa) {
-            log.info("This account is SteamGuard protected.");
-            steamClient.disconnect();
+            logger.info("This account is SteamGuard protected.");
+            disconnect();
             return;
         }
         if (callback.getResult() != EResult.OK) {
-            log.info("Unable to logon to Steam: " + callback.getResult() + " / " + callback.getExtendedResult());
-            manager.setRunning(false);
-            steamClient.disconnect();
+            logger.info("Unable to logon to Steam: " + callback.getResult() + " / " + callback.getExtendedResult());
+            disconnect();
             return;
         }
 
-        log.info("Successfully logged on!");
-        dotaGCHandler.start();
+        logger.info("Successfully logged on! ");
+        logged = true;
     }
 
     private void onLoggedOff(LoggedOffCallback callback) {
-        log.info("Logged off of Steam: " + callback.getResult());
-        manager.setRunning(false);
+        logger.info("Logged off of Steam: " + callback.getResult());
+        logged = false;
     }
 
     private void onMachineAuth(UpdateMachineAuthCallback callback) {
@@ -201,6 +178,9 @@ public class DotaGCApplication extends SpringBootServletInitializer implements W
 
     private void onAccountInfo(AccountInfoCallback callback) {
         steamFriends.setPersonaState(EPersonaState.Online);
+        if (config.getPersonaName() != null && !config.getPersonaName().equals(callback.getPersonaName())) {
+            steamFriends.setPersonaName(config.getPersonaName());
+        }
     }
 
     private void onFriendList(FriendsListCallback callback) {
@@ -233,6 +213,36 @@ public class DotaGCApplication extends SpringBootServletInitializer implements W
             }
             return digest.digest();
         }
+    }
+
+    @Override
+    public void connect() {
+        super.connect();
+        running = true;
+        if (managerLoop == null) {
+            managerLoop = CompletableFuture.runAsync(new Runnable() {
+                @Override
+                public void run() {
+                    while (true) {
+                        manager.runWaitCallbacks(1000L);
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void disconnect() {
+        running = false;
+        super.disconnect();
+    }
+
+    public CallbackManager getManager() {
+        return manager;
+    }
+
+    public SteamClientConfig getConfig() {
+        return config;
     }
 
 }

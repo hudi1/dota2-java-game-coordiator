@@ -1,49 +1,41 @@
 package org.tomass.dota.gc.wrappers;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import javax.annotation.PostConstruct;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import in.dragonbra.javasteam.base.IClientMsg;
-import in.dragonbra.javasteam.handlers.ClientMsgHandler;
-import in.dragonbra.javasteam.steam.steamclient.SteamClient;
+import org.tomass.dota.gc.clients.Dota2Client;
+import org.tomass.dota.gc.config.AppConfig;
+import org.tomass.dota.gc.config.SteamClientConfig;
 
 @Component
 public class SteamClientWrapper {
 
-    private final Logger log = LoggerFactory.getLogger(SteamClientWrapper.class);
+    @Autowired
+    private AppConfig config;
 
-    private SteamClient steamClient;
+    private Map<String, Dota2Client> clients;
+
+    public SteamClientWrapper() {
+        clients = new ConcurrentHashMap<>();
+    }
 
     @PostConstruct
     public void init() {
-        steamClient = new SteamClient();
+        for (Map.Entry<String, SteamClientConfig> entry : config.getClients().entrySet()) {
+            Dota2Client klient = new Dota2Client(entry.getValue());
+            if (klient.getConfig().isConnectOnStart()) {
+                klient.connect();
+            }
+            clients.put(entry.getKey(), klient);
+        }
     }
 
-    public SteamClient getSteamClient() {
-        return steamClient;
-    }
-
-    public <T extends ClientMsgHandler> T getHandler(Class<T> type) {
-        return steamClient.getHandler(type);
-    }
-
-    public void disconnect() {
-        steamClient.disconnect();
-    }
-
-    public void connect() {
-        steamClient.connect();
-    }
-
-    public void addHandler(ClientMsgHandler handler) {
-        steamClient.addHandler(handler);
-    }
-
-    public void send(IClientMsg msg) {
-        steamClient.send(msg);
+    public Dota2Client getSteamClient(String name) {
+        return clients.get(name);
     }
 
 }
