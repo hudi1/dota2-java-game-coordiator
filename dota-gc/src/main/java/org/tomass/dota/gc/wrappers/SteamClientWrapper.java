@@ -8,6 +8,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tomass.dota.gc.clients.Dota2Client;
+import org.tomass.dota.gc.clients.impl.DotaClientImpl;
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
@@ -26,7 +27,7 @@ public class SteamClientWrapper {
     @PostConstruct
     public void init() {
         for (Map.Entry<String, SteamClientConfig> entry : config.getClients().entrySet()) {
-            Dota2Client klient = new Dota2Client(entry.getValue());
+            Dota2Client klient = new DotaClientImpl(entry.getValue());
             if (klient.getConfig().isConnectOnStart()) {
                 klient.connect();
             }

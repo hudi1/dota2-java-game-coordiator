@@ -8,9 +8,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.clients.Dota2Client;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNew;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemoved;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdated;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewParty;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedParty;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedParty;
 import org.tomass.dota.gc.util.Tuple2;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgClientWelcome;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed;
@@ -131,13 +134,16 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandlerImpl {
     private void handleSingleObject(ACTION action, int typeId, ByteString data) {
         switch (action) {
         case NEW:
-            client.postCallback(new SingleObjectNew(typeId, data));
+            client.postCallback(new SingleObjectNewLobby(typeId, data));
+            client.postCallback(new SingleObjectNewParty(typeId, data));
             break;
         case REMOVED:
-            client.postCallback(new SingleObjectRemoved(typeId, data));
+            client.postCallback(new SingleObjectRemovedLobby(typeId, data));
+            client.postCallback(new SingleObjectRemovedParty(typeId, data));
             break;
         case UPDATED:
-            client.postCallback(new SingleObjectUpdated(typeId, data));
+            client.postCallback(new SingleObjectUpdatedLobby(typeId, data));
+            client.postCallback(new SingleObjectUpdatedParty(typeId, data));
             break;
         }
     }
@@ -146,7 +152,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandlerImpl {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.info(">>handleGCMsg for the client " + client + " shared object msg: " + packetGCMsg.getMsgType());
+            logger.trace(">>handleGCMsg shared object msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

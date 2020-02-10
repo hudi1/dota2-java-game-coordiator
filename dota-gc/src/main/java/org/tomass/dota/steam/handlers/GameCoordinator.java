@@ -6,15 +6,20 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
+import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
 
 import com.google.protobuf.ByteString;
 
 import in.dragonbra.javasteam.base.ClientMsgProtobuf;
 import in.dragonbra.javasteam.base.IClientGCMsg;
+import in.dragonbra.javasteam.base.IClientMsg;
 import in.dragonbra.javasteam.base.IPacketMsg;
 import in.dragonbra.javasteam.enums.EMsg;
 import in.dragonbra.javasteam.handlers.ClientMsgHandler;
+import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceInfo;
+import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceRequest;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgGCClient;
 import in.dragonbra.javasteam.steam.handlers.steamgamecoordinator.callback.MessageCallback;
 import in.dragonbra.javasteam.types.JobID;
@@ -31,12 +36,32 @@ public class GameCoordinator extends ClientMsgHandler {
 
     private Map<JobID, CompletableFuture<Object>> subscribers = new HashMap<>();
 
+    private Map<Long, CompletableFuture<Object>> customSubscribers = new HashMap<>();
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public GameCoordinator(Integer appId) {
         this.appId = appId;
         dispatchMap = new HashMap<>();
         dispatchMap.put(EMsg.ClientFromGC, packetMsg -> handleFromGC(packetMsg));
+        dispatchMap.put(EMsg.ClientRichPresenceInfo, packetMsg -> handleRichPresenceInfo(packetMsg));
+    }
+
+    private void handleRichPresenceInfo(IPacketMsg packetMsg) {
+        ClientMsgProtobuf<CMsgClientRichPresenceInfo.Builder> protobuf = new ClientMsgProtobuf<>(
+                CMsgClientRichPresenceInfo.class, packetMsg);
+        ClientRichPresenceInfoCallback callback = new ClientRichPresenceInfoCallback(protobuf.getTargetJobID(),
+                protobuf.getBody());
+        client.postCallback(callback);
+    }
+
+    // request
+    public ClientRichPresenceInfoCallback requestClientRichPresence(Long steamId) {
+        ClientMsgProtobuf<CMsgClientRichPresenceRequest.Builder> protobuf = new ClientMsgProtobuf<>(
+                CMsgClientRichPresenceRequest.class, EMsg.ClientRichPresenceRequest);
+        protobuf.getBody().addSteamidRequest(steamId);
+        protobuf.getProtoHeader().setRoutingAppid(appId);
+        return sendJobAndWait(protobuf, 10);
     }
 
     @Override
@@ -45,25 +70,25 @@ public class GameCoordinator extends ClientMsgHandler {
             throw new IllegalArgumentException("packetMsg is null");
         }
 
-        logger.trace(">>handleMsg for the client " + client + " msg: " + packetMsg.getMsgType());
-        Consumer<IPacketMsg> dispatcher = dispatchMap.get(packetMsg.getMsgType());
-        if (dispatcher != null) {
-            dispatcher.accept(packetMsg);
+        try {
+            logger.trace(">>handleMsg for the client " + client + " msg: " + packetMsg.getMsgType());
+            Consumer<IPacketMsg> dispatcher = dispatchMap.get(packetMsg.getMsgType());
+            if (dispatcher != null) {
+                dispatcher.accept(packetMsg);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     private void handleFromGC(IPacketMsg packetMsg) {
         ClientMsgProtobuf<CMsgGCClient.Builder> msg = new ClientMsgProtobuf<>(CMsgGCClient.class, packetMsg);
         MessageCallback callback = new MessageCallback(msg.getBody());
-        logger.info(">>handleGCMsg for the client " + client + " GC msg: " + callback.geteMsg());
+        logger.trace(">>handleGCMsg for the client " + client + " GC msg: " + callback.geteMsg());
         if (callback.getAppID() != this.appId) {
             return;
         }
 
-        // TODO ASYNC
-        if (callback.getMessage().getTargetJobID().getValue() > 0) {
-            submitResponse(packetMsg.getTargetJobID(), callback.getMessage());
-        }
         for (Map.Entry<Class<? extends ClientGCMsgHandler>, ClientGCMsgHandler> entry : handlers.entrySet()) {
             try {
                 entry.getValue().handleGCMsg(callback.getMessage());
@@ -73,10 +98,16 @@ public class GameCoordinator extends ClientMsgHandler {
         }
     }
 
-    public void submitResponse(long responseId, Object result) {
+    public void submitResponse(Long responseId, Object result) {
         logger.info(">>submitResponse for the client " + client + " jobid: " + responseId);
         if (this.subscribers.get(new JobID(responseId)) != null)
             this.subscribers.get(new JobID(responseId)).complete(result);
+    }
+
+    public void submitCustomResponse(Long responseId, Object result) {
+        logger.info(">>submitCustomResponse for the client " + client + " id: " + responseId);
+        if (this.customSubscribers.get(responseId) != null)
+            this.customSubscribers.get(responseId).complete(result);
     }
 
     /**
@@ -127,12 +158,28 @@ public class GameCoordinator extends ClientMsgHandler {
         client.send(clientMsg);
     }
 
+    public JobID sendJob(IClientMsg msg) {
+        JobID jobID = client.getNextJobID();
+        msg.setSourceJobID(jobID);
+        client.send(msg);
+        return jobID;
+    }
+
+    public <T> T sendJobAndWait(IClientMsg msg, long timeout) {
+        sendJob(msg);
+        return ((Dota2Client) client).registerAndWait(msg.getSourceJobID(), timeout);
+    }
+
     public Map<EMsg, Consumer<IPacketMsg>> getDispatchMap() {
         return dispatchMap;
     }
 
     public Map<JobID, CompletableFuture<Object>> getSubscribers() {
         return subscribers;
+    }
+
+    public Map<Long, CompletableFuture<Object>> getCustomSubscribers() {
+        return customSubscribers;
     }
 
 }

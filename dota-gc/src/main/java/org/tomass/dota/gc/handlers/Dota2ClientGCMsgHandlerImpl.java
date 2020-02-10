@@ -24,8 +24,13 @@ public abstract class Dota2ClientGCMsgHandlerImpl implements ClientGCMsgHandler 
     }
 
     @Override
-    public Object sendJobAndWait(IClientGCMsg msg, long timeout) {
+    public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
         return client.sendJobAndWait(msg, timeout);
+    }
+
+    @Override
+    public <T> T sendCustomAndWait(IClientGCMsg msg, Long id, Long timeout) {
+        return client.sendCustomAndWait(msg, id, timeout);
     }
 
 }

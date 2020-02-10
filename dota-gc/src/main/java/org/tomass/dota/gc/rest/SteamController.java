@@ -113,4 +113,19 @@ public class SteamController extends BaseCommonController {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/steam/client/handler/game", method = RequestMethod.GET, produces = {
+            MediaType.APPLICATION_JSON_VALUE })
+    @Secured({ Role.CONFIG })
+    public ResponseEntity<String> konfigurujClientGcGame(@RequestParam String funkce, @RequestParam String klient,
+            @RequestParam(required = false) boolean bezKonverze, @RequestParam(required = false) String args,
+            @RequestParam(required = false) Integer batch, @RequestParam(required = false) String oddelovace,
+            HttpServletRequest request) {
+
+        log.debug(">>konfigurujClientGc '{}' '{}' '{}' '{}'", funkce, args, batch, oddelovace);
+        String result = konfigurujBatch(funkce, bezKonverze, args, batch,
+                steamClient.getSteamClient(klient).getGameCoordinator(), oddelovace);
+        log.debug("<<konfigurujClientGc '{}'", result);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
 }

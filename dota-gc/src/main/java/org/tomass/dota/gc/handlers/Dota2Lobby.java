@@ -12,9 +12,9 @@ import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyUpdatedCallback;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNew;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemoved;
-import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdated;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
+import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
 import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.dota.gc.util.ServerRegions;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgInviteToLobby;
@@ -63,12 +63,12 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         super(client);
         dispatchMap = new HashMap<>();
 
-        client.getManager().subscribe(SingleObjectNew.class, this::onSingleObjectNew);
-        client.getManager().subscribe(SingleObjectUpdated.class, this::onSingleObjectUpdated);
-        client.getManager().subscribe(SingleObjectRemoved.class, this::onSingleObjectRemoved);
+        client.getManager().subscribe(SingleObjectNewLobby.class, this::onSingleObjectNew);
+        client.getManager().subscribe(SingleObjectUpdatedLobby.class, this::onSingleObjectUpdated);
+        client.getManager().subscribe(SingleObjectRemovedLobby.class, this::onSingleObjectRemoved);
     }
 
-    private void onSingleObjectNew(SingleObjectNew callback) {
+    private void onSingleObjectNew(SingleObjectNewLobby callback) {
         switch (callback.getTypeId()) {
         case CSOTypes.LOBBY_INVITE_VALUE:
             handleLobbyInvite(callback.getData());
@@ -77,23 +77,23 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
             handleLobbyNew(callback.getData());
             break;
         default:
-            logger.info("!!onSingleObjectNew for the client " + client + " with type: " + callback.getTypeId());
+            logger.debug("!!onSingleObjectNew with type: " + callback.getTypeId());
             break;
         }
     }
 
-    private void onSingleObjectUpdated(SingleObjectUpdated callback) {
+    private void onSingleObjectUpdated(SingleObjectUpdatedLobby callback) {
         switch (callback.getTypeId()) {
         case CSOTypes.LOBBY_VALUE:
             handleLobbyUpdated(callback.getData());
             break;
         default:
-            logger.info("!!onSingleObjectUpdated for the client " + client + " with type: " + callback.getTypeId());
+            logger.debug("!!onSingleObjectUpdated with type: " + callback.getTypeId());
             break;
         }
     }
 
-    private void onSingleObjectRemoved(SingleObjectRemoved callback) {
+    private void onSingleObjectRemoved(SingleObjectRemovedLobby callback) {
         switch (callback.getTypeId()) {
         case CSOTypes.LOBBY_INVITE_VALUE:
             handleLobbyInviteRemoved(callback.getData());
@@ -102,7 +102,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
             handleLobbyRemoved(callback.getData());
             break;
         default:
-            logger.info("!!onSingleObjectRemoved for the client " + client + " with type: " + callback.getTypeId());
+            logger.debug("!!onSingleObjectRemoved with type: " + callback.getTypeId());
             break;
         }
     }
@@ -114,7 +114,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleLobbyInvite(ByteString data) {
         try {
             CSODOTALobbyInvite lobbyInvite = CSODOTALobbyInvite.parseFrom(data);
-            logger.trace(">>handleLobbyInvite for the client " + client + ": " + lobbyInvite);
+            logger.trace(">>handleLobbyInvite: " + lobbyInvite);
             client.postCallback(new LobbyInviteCallback(lobbyInvite));
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,7 +124,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleLobbyInviteRemoved(ByteString data) {
         try {
             CSODOTALobbyInvite lobbyInvite = CSODOTALobbyInvite.parseFrom(data);
-            logger.trace(">>handleLobbyInviteRemoved for the client " + client + ": " + lobbyInvite);
+            logger.trace(">>handleLobbyInviteRemoved: " + lobbyInvite);
             client.postCallback(new LobbyInviteRemovedCallback(lobbyInvite));
         } catch (Exception e) {
             e.printStackTrace();
@@ -134,7 +134,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleLobbyNew(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
-            logger.trace(">>handleLobbyNew for the client " + client + ": " + lobby);
+            logger.trace(">>handleLobbyNew: " + lobby);
             this.lobby = lobby;
             client.postCallback(new LobbyNewCallback(lobby));
         } catch (Exception e) {
@@ -145,7 +145,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleLobbyUpdated(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
-            logger.trace(">>handleLobbyUpdated for the client " + client + ": " + lobby);
+            logger.trace(">>handleLobbyUpdated: " + lobby);
             this.lobby = lobby;
             client.postCallback(new LobbyUpdatedCallback(lobby));
         } catch (Exception e) {
@@ -156,7 +156,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleLobbyRemoved(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
-            logger.trace(">>handleLobbyUpdated for the client " + client + ": " + lobby);
+            logger.trace(">>handleLobbyUpdated: " + lobby);
             this.lobby = null;
             client.postCallback(new LobbyRemovedCallback(lobby));
         } catch (Exception e) {
@@ -165,7 +165,6 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     }
 
     // actions
-
     public void createPracticeLobby(String passKey) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
@@ -173,7 +172,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
                 .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120).setGameName(UUID.randomUUID().toString())
                 .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Unlisted);
-        logger.trace(">>respondToPartyInvite for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>respondToPartyInvite: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -181,7 +180,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         ClientGCMsgProtobuf<CMsgPracticeLobbySetDetails.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbySetDetails.class, EDOTAGCMsg.k_EMsgGCPracticeLobbySetDetails_VALUE);
         protobuf.getBody().mergeFrom(options);
-        logger.trace(">>configPracticeLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>configPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -190,7 +189,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
                 EDOTAGCMsg.k_EMsgGCLobbyList_VALUE);
         protobuf.getBody().setServerRegion(serverRegion.getNumber());
         protobuf.getBody().setGameMode(gameMode);
-        logger.trace(">>getLobbyList for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>getLobbyList: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -198,14 +197,14 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         ClientGCMsgProtobuf<CMsgPracticeLobbyList.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyList.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyList_VALUE);
         protobuf.getBody().setPassKey(password);
-        logger.trace(">>getPracticeLobbyList for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>getPracticeLobbyList: " + protobuf.getBody());
         send(protobuf);
     }
 
     public void getFriendPracticeLobbyList() {
         ClientGCMsgProtobuf<CMsgFriendPracticeLobbyListRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgFriendPracticeLobbyListRequest.class, EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListRequest_VALUE);
-        logger.trace(">>getFriendPracticeLobbyList for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>getFriendPracticeLobbyList: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -215,7 +214,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         }
         ClientGCMsgProtobuf<CMsgBalancedShuffleLobby.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgBalancedShuffleLobby.class, EDOTAGCMsg.k_EMsgGCBalancedShuffleLobby_VALUE);
-        logger.trace(">>balancedShuffleLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>balancedShuffleLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -225,7 +224,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         }
         ClientGCMsgProtobuf<CMsgFlipLobbyTeams.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgFlipLobbyTeams.class,
                 EDOTAGCMsg.k_EMsgGCFlipLobbyTeams_VALUE);
-        logger.trace(">>flipLobbyTeams for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>flipLobbyTeams: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -236,7 +235,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         ClientGCMsgProtobuf<CMsgInviteToLobby.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgInviteToLobby.class,
                 EGCBaseMsg.k_EMsgGCInviteToLobby_VALUE);
         protobuf.getBody().setSteamId(steamId);
-        logger.trace(">>flipLobbyTeams for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>flipLobbyTeams: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -247,7 +246,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         ClientGCMsgProtobuf<CMsgPracticeLobbyKick.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyKick.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyKick_VALUE);
         protobuf.getBody().setAccountId(accountId);
-        logger.trace(">>practiceLobbyKick for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>practiceLobbyKick: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -258,7 +257,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         ClientGCMsgProtobuf<CMsgPracticeLobbyKickFromTeam.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyKickFromTeam.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyKickFromTeam_VALUE);
         protobuf.getBody().setAccountId(accountId);
-        logger.trace(">>practiceLobbyKickFromTeam for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>practiceLobbyKickFromTeam: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -270,7 +269,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
                 CMsgPracticeLobbyJoin.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyJoin_VALUE);
         protobuf.getBody().setLobbyId(id);
         protobuf.getBody().setPassKey(password);
-        logger.trace(">>joinPracticeLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>joinPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -280,7 +279,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         // }
         ClientGCMsgProtobuf<CMsgPracticeLobbyLeave.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyLeave.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyLeave_VALUE);
-        logger.trace(">>leaveLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>leaveLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -290,7 +289,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         }
         ClientGCMsgProtobuf<CMsgAbandonCurrentGame.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgAbandonCurrentGame.class, EDOTAGCMsg.k_EMsgGCAbandonCurrentGame_VALUE);
-        logger.trace(">>abandonCurrentGame for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>abandonCurrentGame: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -300,7 +299,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         }
         ClientGCMsgProtobuf<CMsgPracticeLobbyLaunch.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyLaunch.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyLaunch_VALUE);
-        logger.trace(">>launchPracticeLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>launchPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -312,7 +311,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
                 CMsgPracticeLobbySetTeamSlot.class, EDOTAGCMsg.k_EMsgGCPracticeLobbySetTeamSlot_VALUE);
         protobuf.getBody().setTeam(team);
         protobuf.getBody().setSlot(slot);
-        logger.trace(">>joinPracticeLobbyTeam for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>joinPracticeLobbyTeam: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -324,7 +323,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
                 CMsgPracticeLobbyJoinBroadcastChannel.class,
                 EDOTAGCMsg.k_EMsgGCPracticeLobbyJoinBroadcastChannel_VALUE);
         protobuf.getBody().setChannel(channel);
-        logger.trace(">>joinPracticeLobbyBroadcastChannel for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>joinPracticeLobbyBroadcastChannel: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -337,7 +336,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
         protobuf.getBody().setTeam(team);
         protobuf.getBody().setSlot(slot);
         protobuf.getBody().setBotDifficulty(botDifficulty);
-        logger.trace(">>addBotToPracticeLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>addBotToPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -346,14 +345,14 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
                 CMsgLobbyInviteResponse.class, EGCBaseMsg.k_EMsgGCLobbyInviteResponse_VALUE);
         protobuf.getBody().setLobbyId(lobbyId);
         protobuf.getBody().setAccept(accept);
-        logger.trace(">>respondToLobbyInvite for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>respondToLobbyInvite: " + protobuf.getBody());
         send(protobuf);
     }
 
     public void destroyLobby() {
         ClientGCMsgProtobuf<CMsgDOTADestroyLobbyRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTADestroyLobbyRequest.class, EDOTAGCMsg.k_EMsgDestroyLobbyRequest_VALUE);
-        logger.trace(">>destroyLobby for the client " + client + ": " + protobuf.getBody());
+        logger.trace(">>destroyLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -361,7 +360,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.info(">>handleGCMsg for the client " + client + " lobby msg: " + packetGCMsg.getMsgType());
+            logger.trace(">>handleGCMsg lobby msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

@@ -10,10 +10,10 @@ public interface ClientGCMsgHandler {
 
     public abstract void send(IClientGCMsg msg);
 
-    // TODO
     public abstract JobID sendJob(IClientGCMsg msg);
 
-    // TODO
-    public abstract Object sendJobAndWait(IClientGCMsg msg, long timeout);
+    public abstract <T> T sendJobAndWait(IClientGCMsg msg, Long timeout);
+
+    public abstract <T> T sendCustomAndWait(IClientGCMsg msg, Long id, Long timeout);
 
 }

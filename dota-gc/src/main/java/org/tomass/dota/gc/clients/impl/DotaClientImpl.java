@@ -2,13 +2,20 @@ package org.tomass.dota.gc.clients.impl;
 
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.config.SteamClientConfig;
+import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
+import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatMessageCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
+import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback.Game;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyNewCallback;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTAParty;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GC_TEAM;
+
+import in.dragonbra.javasteam.enums.EChatEntryType;
+import in.dragonbra.javasteam.steam.handlers.steamfriends.callback.FriendMsgCallback;
+import in.dragonbra.javasteam.types.SteamID;
 
 public class DotaClientImpl extends Dota2Client {
 
@@ -26,9 +33,34 @@ public class DotaClientImpl extends Dota2Client {
 
         manager.subscribe(PartyInviteCallback.class, this::onPartyInvite);
         manager.subscribe(PartyNewCallback.class, this::onParty);
+        manager.subscribe(ReadyCallback.class, this::onReady);
 
+        manager.subscribe(FriendMsgCallback.class, this::onFriendMsg);
+    }
+
+    private void onReady(ReadyCallback callback) {
         partyHandler.leaveParty();
         lobbyHandler.leaveLobby();
+    }
+
+    private void onFriendMsg(FriendMsgCallback callback) {
+        logger.info("Accepting chat message: " + callback.getMessage());
+        String message = callback.getMessage();
+        long steamId = callback.getSender().convertToUInt64();
+        SteamID requestSteamId = callback.getSender();
+        if (message.startsWith("!info")) {
+            if (message.contains(" ")) {
+                steamId = Long.parseLong(message.split(" ")[1]);
+            }
+            ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
+                    .requestClientRichPresence(steamId);
+            if (info.getWatchableGameID() != null) {
+                Game response = matchHandler.requestTopSourceTvGames(info.getWatchableGameID());
+                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, response + "");
+            } else {
+                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
+            }
+        }
     }
 
     private void onChatMessage(ChatMessageCallback callback) {

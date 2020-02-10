@@ -4,12 +4,12 @@ import com.google.protobuf.ByteString;
 
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 
-public class SingleObjectRemoved extends CallbackMsg {
+public class SingleObjectNewParty extends CallbackMsg {
 
     private int typeId;
     private ByteString data;
 
-    public SingleObjectRemoved(int typeId, ByteString data) {
+    public SingleObjectNewParty(int typeId, ByteString data) {
         this.typeId = typeId;
         this.data = data;
     }
