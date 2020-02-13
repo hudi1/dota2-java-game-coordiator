@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
@@ -31,7 +30,7 @@ import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
-public class Dota2SharedObjects extends Dota2ClientGCMsgHandlerImpl {
+public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
 
     public enum ACTION {
         NEW, REMOVED, UPDATED
@@ -43,8 +42,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandlerImpl {
 
     private Map<Tuple2<Integer, Long>, List<SubscribedType>> cache;
 
-    public Dota2SharedObjects(Dota2Client client) {
-        super(client);
+    public Dota2SharedObjects() {
         dispatchMap = new HashMap<>();
         cache = new ConcurrentHashMap<>();
         dispatchMap.put(ESOMsg.k_ESOMsg_Create_VALUE, packetMsg -> handleCreate(packetMsg));

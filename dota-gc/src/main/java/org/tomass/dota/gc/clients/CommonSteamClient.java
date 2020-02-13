@@ -11,13 +11,17 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
+import in.dragonbra.javasteam.base.IClientMsg;
 import in.dragonbra.javasteam.enums.EFriendRelationship;
 import in.dragonbra.javasteam.enums.EPersonaState;
 import in.dragonbra.javasteam.enums.EResult;
@@ -35,10 +39,14 @@ import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoginKeyCallback
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.UpdateMachineAuthCallback;
 import in.dragonbra.javasteam.steam.steamclient.SteamClient;
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackManager;
+import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.ConnectedCallback;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.DisconnectedCallback;
+import in.dragonbra.javasteam.types.JobID;
 
 public class CommonSteamClient extends SteamClient {
+
+    public static final String JOB_ID_PREFIX = "JobId_";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -55,6 +63,8 @@ public class CommonSteamClient extends SteamClient {
     protected boolean logged;
 
     private CompletableFuture<Void> managerLoop;
+
+    private Map<String, CompletableFuture<Object>> subscribers = new HashMap<>();
 
     public CommonSteamClient(SteamClientConfig config) {
         this.config = config;
@@ -237,8 +247,56 @@ public class CommonSteamClient extends SteamClient {
         super.disconnect();
     }
 
+    @Override
+    public void postCallback(CallbackMsg msg) {
+        if (msg.getJobID().getValue() > 0) {
+            postCallback(msg, JOB_ID_PREFIX + msg.getJobID().getValue());
+        } else {
+            super.postCallback(msg);
+        }
+    }
+
+    public void postCallback(CallbackMsg msg, String key) {
+        submitResponse(key, msg);
+        super.postCallback(msg);
+    }
+
+    public JobID sendJob(IClientMsg msg) {
+        JobID jobID = getNextJobID();
+        msg.setSourceJobID(jobID);
+        send(msg);
+        return jobID;
+    }
+
+    public <T> T sendJobAndWait(IClientMsg msg, long timeout) {
+        sendJob(msg);
+        return registerAndWait(JOB_ID_PREFIX + msg.getSourceJobID().getValue(), timeout);
+    }
+
+    public void submitResponse(String key, Object result) {
+        logger.info(">>submitResponse: " + key);
+        if (this.subscribers.get(key) != null)
+            this.subscribers.get(key).complete(result);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T registerAndWait(String key, Long timeout) {
+        try {
+            CompletableFuture<Object> future = new CompletableFuture<>();
+            subscribers.put(key, future);
+            return (T) future.get(timeout, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public CallbackManager getManager() {
         return manager;
+    }
+
+    public Map<String, CompletableFuture<Object>> getSubscribers() {
+        return subscribers;
     }
 
     public SteamClientConfig getConfig() {

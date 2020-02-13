@@ -18,7 +18,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
             Game game = new Game();
             game.setAverageMmr(sourceGame.getAverageMmr());
             game.setDireScore(sourceGame.getDireScore());
-            game.setRadianScore(sourceGame.getRadiantScore());
+            game.setRadiantScore(sourceGame.getRadiantScore());
             game.setRadiantLead(sourceGame.getRadiantLead());
             game.setLobbyId(sourceGame.getLobbyId());
             game.setMatchId(sourceGame.getMatchId());
@@ -45,7 +45,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
         private Integer averageMmr;
         private Long lobbyId;
         private Integer radiantLead;
-        private Integer radianScore;
+        private Integer radiantScore;
         private Integer direScore;
         private Long matchId;
         private List<Player> players;
@@ -74,12 +74,12 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
             this.radiantLead = radiantLead;
         }
 
-        public Integer getRadianScore() {
-            return radianScore;
+        public Integer getRadiantScore() {
+            return radiantScore;
         }
 
-        public void setRadianScore(Integer radianScore) {
-            this.radianScore = radianScore;
+        public void setRadiantScore(Integer radiantScore) {
+            this.radiantScore = radiantScore;
         }
 
         public Integer getDireScore() {
@@ -109,7 +109,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
         @Override
         public String toString() {
             return "Game [averageMmr=" + averageMmr + ", lobbyId=" + lobbyId + ", radiantLead=" + radiantLead
-                    + ", radianScore=" + radianScore + ", direScore=" + direScore + ", matchId=" + matchId
+                    + ", radiantScore=" + radiantScore + ", direScore=" + direScore + ", matchId=" + matchId
                     + ", players=" + players + "]";
         }
 

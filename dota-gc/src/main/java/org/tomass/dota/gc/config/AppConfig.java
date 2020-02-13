@@ -19,6 +19,7 @@ public class AppConfig {
 
     private Map<String, SteamClientConfig> clients;
     private List<Long> steamIdAdmins;
+    private String steamWebApi;
 
     public long refreshDuration;
 
@@ -97,6 +98,14 @@ public class AppConfig {
 
     public void setRefreshDuration(long refreshDuration) {
         this.refreshDuration = refreshDuration;
+    }
+
+    public String getSteamWebApi() {
+        return steamWebApi;
+    }
+
+    public void setSteamWebApi(String steamWebApi) {
+        this.steamWebApi = steamWebApi;
     }
 
 }

@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
@@ -17,7 +16,7 @@ import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
 import org.tomass.dota.gc.handlers.callbacks.GCWelcomeCallback;
 import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
-import org.tomass.dota.steam.handlers.GameCoordinator;
+import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 import org.tomass.dota.steam.handlers.SteamUser;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAWelcome;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAWelcome.CExtraMsg;
@@ -34,7 +33,6 @@ import com.google.protobuf.ByteString;
 
 import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.ClientMsgProtobuf;
-import in.dragonbra.javasteam.base.IClientGCMsg;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.base.IPacketMsg;
 import in.dragonbra.javasteam.base.PacketClientGCMsg;
@@ -42,8 +40,6 @@ import in.dragonbra.javasteam.base.PacketClientGCMsgProtobuf;
 import in.dragonbra.javasteam.enums.EMsg;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientPlayingSessionState;
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoggedOnCallback;
-import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
-import in.dragonbra.javasteam.types.JobID;
 import in.dragonbra.javasteam.util.MsgUtil;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
@@ -53,9 +49,9 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     private GCConnectionStatus connectionStatus = GCConnectionStatus.GCConnectionStatus_NO_SESSION;
 
-    private static final Integer APP_ID = 570;
+    public static final Integer APP_ID = 570;
 
-    protected GameCoordinator gameCoordinator;
+    protected Dota2SteamGameCoordinator gameCoordinator;
 
     private SteamUser user;
 
@@ -194,31 +190,6 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         setConnectionStatus(GCConnectionStatus.GCConnectionStatus_NO_SESSION);
     }
 
-    @Override
-    public void send(IClientGCMsg msg) {
-        gameCoordinator.send(msg);
-    }
-
-    @Override
-    public JobID sendJob(IClientGCMsg msg) {
-        JobID jobID = getNextJobID();
-        msg.setSourceJobID(jobID);
-        send(msg);
-        return jobID;
-    }
-
-    @Override
-    public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
-        sendJob(msg);
-        return registerAndWait(msg.getSourceJobID(), timeout);
-    }
-
-    @Override
-    public <T> T sendCustomAndWait(IClientGCMsg msg, Long responseId, Long timeout) {
-        send(msg);
-        return registerCustomAndWait(responseId, timeout);
-    }
-
     private void sayHello() {
         ClientGCMsgProtobuf<CMsgClientHello.Builder> hello = new ClientGCMsgProtobuf<>(CMsgClientHello.class,
                 EGCBaseClientMsg.k_EMsgGCClientHello_VALUE);
@@ -226,23 +197,22 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         hello.getBody().setClientLauncher(PartnerAccountType.PARTNER_NONE);
         hello.getBody().setEngine(ESourceEngine.k_ESE_Source2);
         hello.getBody().setSecretKey("");
-        send(hello);
+        gameCoordinator.send(hello);
     }
 
     @Override
     protected void init() {
         super.init();
-        addHandler(gameCoordinator = new GameCoordinator(APP_ID));
+        addHandler(gameCoordinator = new Dota2SteamGameCoordinator());
         addHandler(user = new SteamUser());
         gameCoordinator.addHandler(this);
-        gameCoordinator.addHandler(sharedObjectsHandler = new Dota2SharedObjects(this));
-        gameCoordinator.addHandler(chatHandler = new Dota2Chat(this));
-        gameCoordinator.addHandler(matchHandler = new Dota2Match(this));
-        gameCoordinator.addHandler(partyHandler = new Dota2Party(this));
-        gameCoordinator.addHandler(lobbyHandler = new Dota2Lobby(this));
+        gameCoordinator.addDota2Handler(sharedObjectsHandler = new Dota2SharedObjects());
+        gameCoordinator.addDota2Handler(chatHandler = new Dota2Chat());
+        gameCoordinator.addDota2Handler(matchHandler = new Dota2Match());
+        gameCoordinator.addDota2Handler(partyHandler = new Dota2Party());
+        gameCoordinator.addDota2Handler(lobbyHandler = new Dota2Lobby());
     }
 
-    @Override
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
@@ -262,20 +232,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         launch();
     }
 
-    @Override
-    public void postCallback(CallbackMsg msg) {
-        if (msg.getJobID().getValue() > 0) {
-            gameCoordinator.submitResponse(msg.getJobID().getValue(), msg);
-        }
-        super.postCallback(msg);
-    }
-
-    public void postCallback(CallbackMsg msg, Long responseId) {
-        gameCoordinator.submitCustomResponse(responseId, msg);
-        super.postCallback(msg);
-    }
-
-    public GameCoordinator getGameCoordinator() {
+    public Dota2SteamGameCoordinator getGameCoordinator() {
         return gameCoordinator;
     }
 
@@ -293,30 +250,6 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     public Dota2Match getMatchHandler() {
         return matchHandler;
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T registerAndWait(JobID responseId, long timeout) {
-        try {
-            CompletableFuture<Object> future = new CompletableFuture<>();
-            gameCoordinator.getSubscribers().put(responseId, future);
-            return (T) future.get(timeout, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T> T registerCustomAndWait(Long responseId, long timeout) {
-        try {
-            CompletableFuture<Object> future = new CompletableFuture<>();
-            gameCoordinator.getCustomSubscribers().put(responseId, future);
-            return (T) future.get(timeout, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
 }

@@ -1,6 +1,10 @@
 package org.tomass.dota.gc.clients.impl;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.tomass.dota.gc.clients.Dota2Client;
+import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
@@ -10,17 +14,23 @@ import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback.Game;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyNewCallback;
+import org.tomass.dota.webapi.model.RealtimeStats;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTAParty;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GC_TEAM;
 
 import in.dragonbra.javasteam.enums.EChatEntryType;
 import in.dragonbra.javasteam.steam.handlers.steamfriends.callback.FriendMsgCallback;
+import in.dragonbra.javasteam.steam.webapi.WebAPI;
+import in.dragonbra.javasteam.types.KeyValue;
 import in.dragonbra.javasteam.types.SteamID;
 
 public class DotaClientImpl extends Dota2Client {
 
-    public DotaClientImpl(SteamClientConfig config) {
+    private AppConfig appConfig;
+
+    public DotaClientImpl(SteamClientConfig config, AppConfig appConfig) {
         super(config);
+        this.appConfig = appConfig;
     }
 
     @Override
@@ -54,10 +64,36 @@ public class DotaClientImpl extends Dota2Client {
             }
             ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
                     .requestClientRichPresence(steamId);
-            if (info.getWatchableGameID() != null) {
+            logger.debug(info.getAll());
+            if (info.getWatchableGameID() != null && info.getWatchableGameID() > 0) {
                 Game response = matchHandler.requestTopSourceTvGames(info.getWatchableGameID());
                 steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, response + "");
             } else {
+                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
+            }
+        } else if (message.startsWith("!watch")) {
+            try {
+                if (message.contains(" ")) {
+                    steamId = Long.parseLong(message.split(" ")[1]);
+                }
+                ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
+                        .requestClientRichPresence(steamId);
+                logger.debug(info.getAll());
+                logger.debug(info.getWatchingServer().convertToUInt64() + "");
+                if (info.getWatchingServer() != null) {
+                    WebAPI api = getConfiguration().getWebAPI("IDOTA2MatchStats_570");
+                    Map<String, String> params = new LinkedHashMap<>();
+                    params.put("server_steam_id", info.getWatchingServer().convertToUInt64() + "");
+                    params.put("key", appConfig.getSteamWebApi());
+                    KeyValue response = api.call("GetRealtimeStats", params);
+                    RealtimeStats stats = RealtimeStats.parseFrom(response);
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, stats.getRadiant().toString());
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, stats.getDire().toString());
+                } else {
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
                 steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
             }
         }
@@ -74,7 +110,7 @@ public class DotaClientImpl extends Dota2Client {
 
     private void onLobbyNew(LobbyNewCallback callback) {
         chatHandler.joinLobbyChannel();
-        lobbyHandler.joinPracticeLobbyTeam(DOTA_GC_TEAM.DOTA_GC_TEAM_PLAYER_POOL, 1);
+        lobbyHandler.joinPracticeLobbyTeam(DOTA_GC_TEAM.DOTA_GC_TEAM_NOTEAM, 1);
     }
 
     private void onPartyInvite(PartyInviteCallback callback) {

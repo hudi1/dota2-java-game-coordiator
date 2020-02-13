@@ -35,14 +35,13 @@ import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
-public class Dota2Match extends Dota2ClientGCMsgHandlerImpl {
+public class Dota2Match extends Dota2ClientGCMsgHandler {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
-    public Dota2Match(Dota2Client client) {
-        super(client);
+    public Dota2Match() {
         dispatchMap = new HashMap<>();
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCMatchmakingStatsResponse_VALUE, packetMsg -> handleMmstats(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCToClientFindTopSourceTVGamesResponse_VALUE,
@@ -76,7 +75,9 @@ public class Dota2Match extends Dota2ClientGCMsgHandlerImpl {
         TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody());
         if (protobuf.getBody().getSpecificGames()) {
             for (Game game : callback.getGames()) {
-                client.postCallback(game, game.getLobbyId());
+                if (game.getLobbyId() != null && game.getLobbyId() > 0) {
+                    ((Dota2Client) client).postCallback(game, game.getLobbyId().toString());
+                }
             }
         } else {
             client.postCallback(callback);

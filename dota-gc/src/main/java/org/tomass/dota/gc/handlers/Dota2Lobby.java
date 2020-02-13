@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
@@ -17,6 +16,7 @@ import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
 import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.dota.gc.util.ServerRegions;
+import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgInviteToLobby;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgLobbyInviteResponse;
 import org.tomass.protobuf.dota.BaseGcmessages.EGCBaseMsg;
@@ -51,7 +51,7 @@ import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
-public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
+public class Dota2Lobby extends Dota2ClientGCMsgHandler {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -59,10 +59,13 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandlerImpl {
 
     private CSODOTALobby lobby;
 
-    public Dota2Lobby(Dota2Client client) {
-        super(client);
+    public Dota2Lobby() {
         dispatchMap = new HashMap<>();
+    }
 
+    @Override
+    public void setup(Dota2SteamGameCoordinator gameCoordinator) {
+        super.setup(gameCoordinator);
         client.getManager().subscribe(SingleObjectNewLobby.class, this::onSingleObjectNew);
         client.getManager().subscribe(SingleObjectUpdatedLobby.class, this::onSingleObjectUpdated);
         client.getManager().subscribe(SingleObjectRemovedLobby.class, this::onSingleObjectRemoved);

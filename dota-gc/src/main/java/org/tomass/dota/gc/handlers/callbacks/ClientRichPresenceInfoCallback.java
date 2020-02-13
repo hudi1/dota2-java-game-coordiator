@@ -8,10 +8,12 @@ import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.C
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceInfo.RichPresence;
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 import in.dragonbra.javasteam.types.JobID;
+import in.dragonbra.javasteam.types.SteamID;
 
 public class ClientRichPresenceInfoCallback extends CallbackMsg {
 
     private Long watchableGameID;
+    private SteamID watchingServer;
     private Long steamId;
     private String all;
 
@@ -42,6 +44,11 @@ public class ClientRichPresenceInfoCallback extends CallbackMsg {
         if (kvMap.get("WatchableGameID") != null) {
             watchableGameID = Long.parseLong(kvMap.get("WatchableGameID"));
         }
+
+        if (kvMap.get("watching_server") != null) {
+            watchingServer = new SteamID();
+            watchingServer.setFromSteam3String(kvMap.get("watching_server"));
+        }
         this.all = all.toString();
     }
 
@@ -51,6 +58,14 @@ public class ClientRichPresenceInfoCallback extends CallbackMsg {
 
     public void setWatchableGameID(Long watchableGameID) {
         this.watchableGameID = watchableGameID;
+    }
+
+    public SteamID getWatchingServer() {
+        return watchingServer;
+    }
+
+    public void setWatchingServer(SteamID watchingServer) {
+        this.watchingServer = watchingServer;
     }
 
     public Long getSteamId() {
@@ -71,8 +86,8 @@ public class ClientRichPresenceInfoCallback extends CallbackMsg {
 
     @Override
     public String toString() {
-        return "ClientRichPresenceInfoCallback [watchableGameID=" + watchableGameID + ", steamId=" + steamId + ", all="
-                + all + "]";
+        return "ClientRichPresenceInfoCallback [watchableGameID=" + watchableGameID + ", watchingServer="
+                + watchingServer + ", steamId=" + steamId + ", all=" + all + "]";
     }
 
 }

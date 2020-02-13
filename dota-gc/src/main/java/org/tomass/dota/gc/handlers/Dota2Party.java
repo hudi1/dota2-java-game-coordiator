@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInvitationCreatedCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyNewCallback;
@@ -15,6 +14,7 @@ import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedParty;
 import org.tomass.dota.gc.util.CSOTypes;
+import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgInvitationCreated;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgInviteToParty;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgKickFromParty;
@@ -36,7 +36,7 @@ import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
-public class Dota2Party extends Dota2ClientGCMsgHandlerImpl {
+public class Dota2Party extends Dota2ClientGCMsgHandler {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -44,10 +44,14 @@ public class Dota2Party extends Dota2ClientGCMsgHandlerImpl {
 
     private CSODOTAParty party;
 
-    public Dota2Party(Dota2Client client) {
-        super(client);
+    public Dota2Party() {
         dispatchMap = new HashMap<>();
         dispatchMap.put(EGCBaseMsg.k_EMsgGCInvitationCreated_VALUE, packetMsg -> handleInvitationCreated(packetMsg));
+    }
+
+    @Override
+    public void setup(Dota2SteamGameCoordinator gameCoordinator) {
+        super.setup(gameCoordinator);
         client.getManager().subscribe(SingleObjectNewParty.class, this::onSingleObjectNew);
         client.getManager().subscribe(SingleObjectUpdatedParty.class, this::onSingleObjectUpdated);
         client.getManager().subscribe(SingleObjectRemovedParty.class, this::onSingleObjectRemoved);

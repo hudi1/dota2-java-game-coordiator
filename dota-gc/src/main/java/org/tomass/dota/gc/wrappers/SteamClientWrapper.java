@@ -27,7 +27,7 @@ public class SteamClientWrapper {
     @PostConstruct
     public void init() {
         for (Map.Entry<String, SteamClientConfig> entry : config.getClients().entrySet()) {
-            Dota2Client klient = new DotaClientImpl(entry.getValue());
+            Dota2Client klient = new DotaClientImpl(entry.getValue(), config);
             if (klient.getConfig().isConnectOnStart()) {
                 klient.connect();
             }
