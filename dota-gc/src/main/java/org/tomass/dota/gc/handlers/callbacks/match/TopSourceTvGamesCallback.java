@@ -22,6 +22,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
             game.setRadiantLead(sourceGame.getRadiantLead());
             game.setLobbyId(sourceGame.getLobbyId());
             game.setMatchId(sourceGame.getMatchId());
+            game.setDelay(sourceGame.getDelay());
             game.setPlayers(sourceGame.getPlayersList());
             games.add(game);
         }
@@ -48,6 +49,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
         private Integer radiantScore;
         private Integer direScore;
         private Long matchId;
+        private Integer delay;
         private List<Player> players;
 
         public Integer getAverageMmr() {
@@ -98,6 +100,14 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
             this.matchId = matchId;
         }
 
+        public Integer getDelay() {
+            return delay;
+        }
+
+        public void setDelay(Integer delay) {
+            this.delay = delay;
+        }
+
         public List<Player> getPlayers() {
             return players;
         }
@@ -110,7 +120,7 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
         public String toString() {
             return "Game [averageMmr=" + averageMmr + ", lobbyId=" + lobbyId + ", radiantLead=" + radiantLead
                     + ", radiantScore=" + radiantScore + ", direScore=" + direScore + ", matchId=" + matchId
-                    + ", players=" + players + "]";
+                    + ", delay=" + delay + ", players=" + players + "]";
         }
 
     }

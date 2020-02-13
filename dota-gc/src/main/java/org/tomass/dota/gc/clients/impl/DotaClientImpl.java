@@ -58,28 +58,26 @@ public class DotaClientImpl extends Dota2Client {
         String message = callback.getMessage();
         long steamId = callback.getSender().convertToUInt64();
         SteamID requestSteamId = callback.getSender();
-        if (message.startsWith("!info")) {
-            if (message.contains(" ")) {
-                steamId = Long.parseLong(message.split(" ")[1]);
-            }
-            ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
-                    .requestClientRichPresence(steamId);
-            logger.debug(info.getAll());
-            if (info.getWatchableGameID() != null && info.getWatchableGameID() > 0) {
-                Game response = matchHandler.requestTopSourceTvGames(info.getWatchableGameID());
-                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, response + "");
-            } else {
-                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
-            }
-        } else if (message.startsWith("!watch")) {
-            try {
+        try {
+            if (message.startsWith("!info")) {
                 if (message.contains(" ")) {
                     steamId = Long.parseLong(message.split(" ")[1]);
                 }
                 ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
                         .requestClientRichPresence(steamId);
                 logger.debug(info.getAll());
-                logger.debug(info.getWatchingServer().convertToUInt64() + "");
+                if (info.getWatchableGameID() != null && info.getWatchableGameID() > 0) {
+                    Game response = matchHandler.requestTopSourceTvGames(info.getWatchableGameID());
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, response + "");
+                } else {
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
+                }
+            } else if (message.startsWith("!watch")) {
+                if (message.contains(" ")) {
+                    steamId = Long.parseLong(message.split(" ")[1]);
+                }
+                ClientRichPresenceInfoCallback info = (ClientRichPresenceInfoCallback) gameCoordinator
+                        .requestClientRichPresence(steamId);
                 if (info.getWatchingServer() != null) {
                     WebAPI api = getConfiguration().getWebAPI("IDOTA2MatchStats_570");
                     Map<String, String> params = new LinkedHashMap<>();
@@ -92,10 +90,10 @@ public class DotaClientImpl extends Dota2Client {
                 } else {
                     steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-                steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
         }
     }
 

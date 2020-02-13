@@ -234,7 +234,12 @@ public class CommonSteamClient extends SteamClient {
                 @Override
                 public void run() {
                     while (true) {
-                        manager.runWaitCallbacks(1000L);
+                        try {
+                            manager.runWaitCallbacks(1000L);
+                        } catch (Exception e) {
+                            logger.error("!!managerLoop: ", e);
+                            e.printStackTrace();
+                        }
                     }
                 }
             });

@@ -150,12 +150,13 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     private void knockOnGc() {
         while (true) {
-            if (!ready) {
-                sayHello();
-            }
             try {
+                if (!ready) {
+                    sayHello();
+                }
                 Thread.sleep(60000);
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
+                logger.error("!!knockOnGc: ", e);
                 e.printStackTrace();
             }
         }
