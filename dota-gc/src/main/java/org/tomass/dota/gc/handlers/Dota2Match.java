@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.callbacks.match.DatagramTicketCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchDetailsCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchHistoryCallback;
@@ -72,11 +71,11 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgGCToClientFindTopSourceTVGamesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientFindTopSourceTVGamesResponse.class, msg);
         logger.trace(">>handleTopSourceTv: " + protobuf.getBody());
-        TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody());
+        TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody(), client.getAppConfig());
         if (protobuf.getBody().getSpecificGames()) {
             for (Game game : callback.getGames()) {
                 if (game.getLobbyId() != null && game.getLobbyId() > 0) {
-                    ((Dota2Client) client).postCallback(game, game.getLobbyId().toString());
+                    client.postCallback(game, game.getLobbyId().toString());
                 }
             }
         } else {

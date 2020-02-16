@@ -26,11 +26,8 @@ import in.dragonbra.javasteam.types.SteamID;
 
 public class DotaClientImpl extends Dota2Client {
 
-    private AppConfig appConfig;
-
     public DotaClientImpl(SteamClientConfig config, AppConfig appConfig) {
-        super(config);
-        this.appConfig = appConfig;
+        super(config, appConfig);
     }
 
     @Override
@@ -68,7 +65,8 @@ public class DotaClientImpl extends Dota2Client {
                 logger.debug(info.getAll());
                 if (info.getWatchableGameID() != null && info.getWatchableGameID() > 0) {
                     Game response = matchHandler.requestTopSourceTvGames(info.getWatchableGameID());
-                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, response + "");
+                    steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg,
+                            response.toWellPrintedString());
                 } else {
                     steamFriends.sendChatMessage(requestSteamId, EChatEntryType.ChatMsg, "Match was not found");
                 }

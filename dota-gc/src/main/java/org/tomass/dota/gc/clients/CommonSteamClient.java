@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
 import in.dragonbra.javasteam.base.IClientMsg;
@@ -52,6 +53,8 @@ public class CommonSteamClient extends SteamClient {
 
     protected SteamClientConfig config;
 
+    protected AppConfig appConfig;
+
     protected SteamUser steamUser;
 
     protected SteamFriends steamFriends;
@@ -66,8 +69,9 @@ public class CommonSteamClient extends SteamClient {
 
     private Map<String, CompletableFuture<Object>> subscribers = new HashMap<>();
 
-    public CommonSteamClient(SteamClientConfig config) {
+    public CommonSteamClient(SteamClientConfig config, AppConfig appConfig) {
         this.config = config;
+        this.appConfig = appConfig;
         init();
     }
 
@@ -306,6 +310,14 @@ public class CommonSteamClient extends SteamClient {
 
     public SteamClientConfig getConfig() {
         return config;
+    }
+
+    public AppConfig getAppConfig() {
+        return appConfig;
+    }
+
+    public void setAppConfig(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 
 }

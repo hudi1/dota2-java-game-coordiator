@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
+import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.Dota2Chat;
@@ -69,8 +70,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     protected Dota2SharedObjects sharedObjectsHandler;
 
-    public Dota2Client(SteamClientConfig config) {
-        super(config);
+    public Dota2Client(SteamClientConfig config, AppConfig appConfig) {
+        super(config, appConfig);
         dispatchMap = new HashMap<>();
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientWelcome_VALUE, packetMsg -> handleWelcome(packetMsg));
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientConnectionStatus_VALUE, packetMsg -> handleStatus(packetMsg));

@@ -18,6 +18,8 @@ public class AppConfig {
     private Map<String, String> uzivateleRole = new ConcurrentHashMap<>();
 
     private Map<String, SteamClientConfig> clients;
+    private Map<Integer, String> heroes;
+    private Map<Integer, String> notableplayers;
     private List<Long> steamIdAdmins;
     private String steamWebApi;
 
@@ -106,6 +108,22 @@ public class AppConfig {
 
     public void setSteamWebApi(String steamWebApi) {
         this.steamWebApi = steamWebApi;
+    }
+
+    public Map<Integer, String> getHeroes() {
+        return heroes;
+    }
+
+    public void setHeroes(Map<Integer, String> heroes) {
+        this.heroes = heroes;
+    }
+
+    public Map<Integer, String> getNotableplayers() {
+        return notableplayers;
+    }
+
+    public void setNotableplayers(Map<Integer, String> notableplayers) {
+        this.notableplayers = notableplayers;
     }
 
 }
