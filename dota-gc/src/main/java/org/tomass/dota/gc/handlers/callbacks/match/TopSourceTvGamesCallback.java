@@ -12,9 +12,12 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
 
     private List<Game> games = new ArrayList<>();
 
+    private boolean specificGame;
+
     private final String NEW_LINE = System.getProperty("line.separator");
 
     public TopSourceTvGamesCallback(Builder builder, AppConfig appConfig) {
+        this.specificGame = builder.getSpecificGames();
         for (org.tomass.protobuf.dota.DotaGcmessagesClientWatch.CSourceTVGameSmall.Builder sourceGame : builder
                 .getGameListBuilderList()) {
             Game game = new Game();
@@ -49,6 +52,14 @@ public class TopSourceTvGamesCallback extends CallbackMsg {
     @Override
     public String toString() {
         return "TopSourceTvGamesCallback [games=" + games + "]";
+    }
+
+    public boolean isSpecificGame() {
+        return specificGame;
+    }
+
+    public void setSpecificGame(boolean specificGame) {
+        this.specificGame = specificGame;
     }
 
     public class Game extends CallbackMsg {

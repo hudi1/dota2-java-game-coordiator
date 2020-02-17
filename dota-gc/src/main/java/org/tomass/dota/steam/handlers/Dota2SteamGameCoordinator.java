@@ -5,7 +5,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tomass.dota.gc.clients.CommonSteamClient;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
@@ -53,7 +52,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
                 CMsgClientRichPresenceRequest.class, EMsg.ClientRichPresenceRequest);
         protobuf.getBody().addSteamidRequest(steamId);
         protobuf.getProtoHeader().setRoutingAppid(appId);
-        return ((CommonSteamClient) client).sendJobAndWait(protobuf, 10);
+        return getClient().sendJobAndWait(protobuf, 10);
     }
 
     @Override
@@ -68,7 +67,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         }
 
         try {
-            logger.trace(">>handleMsg for the client " + client + " msg: " + packetMsg.getMsgType());
+            logger.trace(">>handleMsg msg: " + packetMsg.getMsgType());
             Consumer<IPacketMsg> dispatcher = dispatchMap.get(packetMsg.getMsgType());
             if (dispatcher != null) {
                 dispatcher.accept(packetMsg);
@@ -81,7 +80,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
     public void handleFromGC(IPacketMsg packetMsg) {
         ClientMsgProtobuf<CMsgGCClient.Builder> msg = new ClientMsgProtobuf<>(CMsgGCClient.class, packetMsg);
         MessageCallback callback = new MessageCallback(msg.getBody());
-        logger.trace(">>handleGCMsg for the client " + client + " GC msg: " + callback.geteMsg());
+        logger.trace(">>handleGCMsg GC msg: " + callback.geteMsg());
         if (callback.getAppID() != this.appId) {
             return;
         }
@@ -151,13 +150,12 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
 
     public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
         sendJob(msg);
-        return ((CommonSteamClient) client)
-                .registerAndWait(CommonSteamClient.JOB_ID_PREFIX + msg.getSourceJobID().getValue(), timeout);
+        return getClient().registerAndWait(msg.getSourceJobID(), timeout);
     }
 
-    public <T> T sendCustomAndWait(IClientGCMsg msg, Long responseId, Long timeout) {
+    public <T> T sendCustomAndWait(IClientGCMsg msg, Object key, Long timeout) {
         send(msg);
-        return ((CommonSteamClient) client).registerAndWait(responseId.toString(), timeout);
+        return getClient().registerAndWait(key, timeout);
     }
 
 }

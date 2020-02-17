@@ -8,15 +8,16 @@ import java.util.concurrent.CompletableFuture;
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
-import org.tomass.dota.gc.handlers.Dota2Chat;
-import org.tomass.dota.gc.handlers.Dota2Lobby;
-import org.tomass.dota.gc.handlers.Dota2Match;
-import org.tomass.dota.gc.handlers.Dota2Party;
-import org.tomass.dota.gc.handlers.Dota2SharedObjects;
 import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
 import org.tomass.dota.gc.handlers.callbacks.GCWelcomeCallback;
 import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
+import org.tomass.dota.gc.handlers.features.Dota2Chat;
+import org.tomass.dota.gc.handlers.features.Dota2Lobby;
+import org.tomass.dota.gc.handlers.features.Dota2Match;
+import org.tomass.dota.gc.handlers.features.Dota2Party;
+import org.tomass.dota.gc.handlers.features.Dota2Player;
+import org.tomass.dota.gc.handlers.features.Dota2SharedObjects;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 import org.tomass.dota.steam.handlers.SteamUser;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAWelcome;
@@ -67,6 +68,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     protected Dota2Chat chatHandler;
 
     protected Dota2Match matchHandler;
+
+    protected Dota2Player playerHandler;
 
     protected Dota2SharedObjects sharedObjectsHandler;
 
@@ -213,6 +216,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         gameCoordinator.addDota2Handler(matchHandler = new Dota2Match());
         gameCoordinator.addDota2Handler(partyHandler = new Dota2Party());
         gameCoordinator.addDota2Handler(lobbyHandler = new Dota2Lobby());
+        gameCoordinator.addDota2Handler(playerHandler = new Dota2Player());
     }
 
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
@@ -252,6 +256,14 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     public Dota2Match getMatchHandler() {
         return matchHandler;
+    }
+
+    public Dota2Player getPlayerHandler() {
+        return playerHandler;
+    }
+
+    public boolean isReady() {
+        return ready;
     }
 
 }

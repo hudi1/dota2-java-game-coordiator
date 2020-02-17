@@ -1,10 +1,12 @@
-package org.tomass.dota.gc.handlers;
+package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
+import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInvitationCreatedCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyNewCallback;
@@ -55,6 +57,11 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         client.getManager().subscribe(SingleObjectNewParty.class, this::onSingleObjectNew);
         client.getManager().subscribe(SingleObjectUpdatedParty.class, this::onSingleObjectUpdated);
         client.getManager().subscribe(SingleObjectRemovedParty.class, this::onSingleObjectRemoved);
+        client.getManager().subscribe(NotReadyCallback.class, this::onNotReady);
+    }
+
+    private void onNotReady(NotReadyCallback callback) {
+        partyCleanup();
     }
 
     private void onSingleObjectNew(SingleObjectNewParty callback) {

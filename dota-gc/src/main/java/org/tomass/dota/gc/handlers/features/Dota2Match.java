@@ -1,10 +1,11 @@
-package org.tomass.dota.gc.handlers;
+package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.match.DatagramTicketCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchDetailsCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchHistoryCallback;
@@ -75,7 +76,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         if (protobuf.getBody().getSpecificGames()) {
             for (Game game : callback.getGames()) {
                 if (game.getLobbyId() != null && game.getLobbyId() > 0) {
-                    client.postCallback(game, game.getLobbyId().toString());
+                    client.postCallback(msg.getMsgType(), game);
                 }
             }
         } else {
@@ -143,7 +144,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
                 CMsgClientToGCFindTopSourceTVGames.class, EDOTAGCMsg.k_EMsgClientToGCFindTopSourceTVGames_VALUE);
         logger.trace(">>requestTopSourceTvGames: " + protobuf.getBody());
         protobuf.getBody().addLobbyIds(lobbyId);
-        return sendCustomAndWait(protobuf, lobbyId, 10l);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCToClientFindTopSourceTVGamesResponse_VALUE, 10l);
     }
 
     public void requestTopFriendMatches() {

@@ -11,7 +11,6 @@ public class MatchDetailsCallback extends CallbackMsg {
 
     public MatchDetailsCallback(JobID jobID, Builder body) {
         setJobID(jobID);
-
         this.setResult(body.getResult());
     }
 

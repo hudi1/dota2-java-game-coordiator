@@ -67,7 +67,7 @@ public class CommonSteamClient extends SteamClient {
 
     private CompletableFuture<Void> managerLoop;
 
-    private Map<String, CompletableFuture<Object>> subscribers = new HashMap<>();
+    private Map<Object, CompletableFuture<Object>> subscribers = new HashMap<>();
 
     public CommonSteamClient(SteamClientConfig config, AppConfig appConfig) {
         this.config = config;
@@ -258,14 +258,14 @@ public class CommonSteamClient extends SteamClient {
 
     @Override
     public void postCallback(CallbackMsg msg) {
-        if (msg.getJobID().getValue() > 0) {
-            postCallback(msg, JOB_ID_PREFIX + msg.getJobID().getValue());
+        if (!msg.getJobID().equals(JobID.INVALID)) {
+            postCallback(msg.getJobID(), msg);
         } else {
             super.postCallback(msg);
         }
     }
 
-    public void postCallback(CallbackMsg msg, String key) {
+    public void postCallback(Object key, CallbackMsg msg) {
         submitResponse(key, msg);
         super.postCallback(msg);
     }
@@ -279,17 +279,18 @@ public class CommonSteamClient extends SteamClient {
 
     public <T> T sendJobAndWait(IClientMsg msg, long timeout) {
         sendJob(msg);
-        return registerAndWait(JOB_ID_PREFIX + msg.getSourceJobID().getValue(), timeout);
+        return registerAndWait(msg.getSourceJobID(), timeout);
     }
 
-    public void submitResponse(String key, Object result) {
-        logger.info(">>submitResponse: " + key);
-        if (this.subscribers.get(key) != null)
+    public void submitResponse(Object key, Object result) {
+        if (this.subscribers.get(key) != null) {
+            logger.info(">>submitResponse: " + key);
             this.subscribers.get(key).complete(result);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T registerAndWait(String key, Long timeout) {
+    public <T> T registerAndWait(Object key, Long timeout) {
         try {
             CompletableFuture<Object> future = new CompletableFuture<>();
             subscribers.put(key, future);
@@ -297,6 +298,8 @@ public class CommonSteamClient extends SteamClient {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        } finally {
+            subscribers.remove(key);
         }
     }
 
@@ -304,7 +307,7 @@ public class CommonSteamClient extends SteamClient {
         return manager;
     }
 
-    public Map<String, CompletableFuture<Object>> getSubscribers() {
+    public Map<Object, CompletableFuture<Object>> getSubscribers() {
         return subscribers;
     }
 

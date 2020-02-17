@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.handlers;
+package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatChannelLeft;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatJoinedChannelCallback;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersJoinUpdate;

@@ -2,7 +2,7 @@ package org.tomass.dota.gc.handlers.callbacks.chat;
 
 import java.util.Set;
 
-import org.tomass.dota.gc.handlers.Dota2Chat.ChatChannel;
+import org.tomass.dota.gc.handlers.features.Dota2Chat.ChatChannel;
 
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 

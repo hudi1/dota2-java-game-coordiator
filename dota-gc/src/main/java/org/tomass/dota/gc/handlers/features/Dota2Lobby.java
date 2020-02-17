@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.handlers;
+package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
+import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
@@ -25,7 +27,9 @@ import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTADestroyLobbyRequest
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgFlipLobbyTeams;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgAbandonCurrentGame;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgFriendPracticeLobbyListRequest;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgFriendPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgLobbyList;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyCreate;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyJoin;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyJoinBroadcastChannel;
@@ -34,6 +38,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyLaunch;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyLeave;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyList;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetTeamSlot;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
@@ -61,6 +66,32 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
 
     public Dota2Lobby() {
         dispatchMap = new HashMap<>();
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCPracticeLobbyListResponse_VALUE,
+                packetMsg -> handlePracticeLobby(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListResponse_VALUE,
+                packetMsg -> handleFriendPracticeLobby(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE, packetMsg -> handleLobby(packetMsg));
+    }
+
+    private void handlePracticeLobby(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgPracticeLobbyListResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgPracticeLobbyListResponse.class, data);
+        logger.trace(">>handlePracticeLobby: " + protobuf.getBody() + " /" + data.getTargetJobID());
+        client.postCallback(new LobbyCallback(data.getTargetJobID(), protobuf.getBody().getLobbiesList()));
+    }
+
+    private void handleFriendPracticeLobby(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgFriendPracticeLobbyListResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgFriendPracticeLobbyListResponse.class, data);
+        logger.trace(">>handleFriendPracticeLobby: " + protobuf.getBody());
+        client.postCallback(data.getMsgType(), new LobbyCallback(protobuf.getBody().getLobbiesList()));
+    }
+
+    private void handleLobby(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgLobbyListResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgLobbyListResponse.class, data);
+        logger.trace(">>handleLobby: " + protobuf.getBody());
+        client.postCallback(data.getMsgType(), new LobbyCallback(protobuf.getBody().getLobbiesList()));
     }
 
     @Override
@@ -187,28 +218,29 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         send(protobuf);
     }
 
-    public void getLobbyList(ServerRegions serverRegion, DOTA_GameMode gameMode) {
+    public LobbyCallback getLobbyList(Integer serverRegion, Integer gameMode) {
         ClientGCMsgProtobuf<CMsgLobbyList.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgLobbyList.class,
                 EDOTAGCMsg.k_EMsgGCLobbyList_VALUE);
-        protobuf.getBody().setServerRegion(serverRegion.getNumber());
-        protobuf.getBody().setGameMode(gameMode);
+        protobuf.getBody().setServerRegion(serverRegion == null ? ServerRegions.UNSPECIFIED.getNumber() : serverRegion);
+        protobuf.getBody()
+                .setGameMode(gameMode == null ? DOTA_GameMode.DOTA_GAMEMODE_NONE : DOTA_GameMode.forNumber(gameMode));
         logger.trace(">>getLobbyList: " + protobuf.getBody());
-        send(protobuf);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE, 10l);
     }
 
-    public void getPracticeLobbyList(String password) {
+    public LobbyCallback getPracticeLobbyList(String password) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyList.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyList.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyList_VALUE);
         protobuf.getBody().setPassKey(password);
         logger.trace(">>getPracticeLobbyList: " + protobuf.getBody());
-        send(protobuf);
+        return sendJobAndWait(protobuf, 10l);
     }
 
-    public void getFriendPracticeLobbyList() {
+    public LobbyCallback getFriendPracticeLobbyList() {
         ClientGCMsgProtobuf<CMsgFriendPracticeLobbyListRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgFriendPracticeLobbyListRequest.class, EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListRequest_VALUE);
         logger.trace(">>getFriendPracticeLobbyList: " + protobuf.getBody());
-        send(protobuf);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListResponse_VALUE, 10l);
     }
 
     public void balancedShuffleLobby() {
@@ -277,9 +309,9 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     }
 
     public void leaveLobby() {
-        // if (lobby == null) {
-        // return;
-        // }
+        if (lobby == null) {
+            return;
+        }
         ClientGCMsgProtobuf<CMsgPracticeLobbyLeave.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyLeave.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyLeave_VALUE);
         logger.trace(">>leaveLobby: " + protobuf.getBody());

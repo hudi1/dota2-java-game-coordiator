@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.handlers;
+package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
