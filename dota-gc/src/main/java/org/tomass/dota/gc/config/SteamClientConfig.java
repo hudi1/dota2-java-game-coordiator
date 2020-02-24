@@ -20,7 +20,11 @@ public class SteamClientConfig {
 
     private boolean reconnectOnDisconnect;
 
-    private int partyCountMembers;
+    private Integer partyCountMembers;
+
+    private Integer lobbyCountMembers;
+
+    private Integer leagueId;
 
     public String getUser() {
         return user;
@@ -94,19 +98,37 @@ public class SteamClientConfig {
         this.personaName = personaName;
     }
 
-    public int getPartyCountMembers() {
+    public Integer getPartyCountMembers() {
         return partyCountMembers;
     }
 
-    public void setPartyCountMembers(int partyCountMembers) {
+    public void setPartyCountMembers(Integer partyCountMembers) {
         this.partyCountMembers = partyCountMembers;
+    }
+
+    public Integer getLobbyCountMembers() {
+        return lobbyCountMembers;
+    }
+
+    public void setLobbyCountMembers(Integer lobbyCountMembers) {
+        this.lobbyCountMembers = lobbyCountMembers;
+    }
+
+    public Integer getLeagueId() {
+        return leagueId;
+    }
+
+    public void setLeagueId(Integer leagueId) {
+        this.leagueId = leagueId;
     }
 
     @Override
     public String toString() {
-        return "AppConfig [user=" + user + ", pass=*****" + ", authCode=" + authCode + ", twoFactorAuth="
-                + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", connectOnStart=" + connectOnStart
-                + ", reconnectOnDisconnect=" + reconnectOnDisconnect + "]";
+        return "SteamClientConfig [user=" + user + ", pass=*****" + ", authCode=" + authCode + ", twoFactorAuth="
+                + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
+                + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
+                + ", partyCountMembers=" + partyCountMembers + ", lobbyCountMembers=" + lobbyCountMembers
+                + ", leagueId=" + leagueId + "]";
     }
 
 }

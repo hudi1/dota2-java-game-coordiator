@@ -283,15 +283,23 @@ public class CommonSteamClient extends SteamClient {
     }
 
     public void submitResponse(Object key, Object result) {
+        logger.trace(">>submitResponse: " + key);
         if (this.subscribers.get(key) != null) {
-            logger.info(">>submitResponse: " + key);
             this.subscribers.get(key).complete(result);
+        } else {
+            CompletableFuture<Object> future = new CompletableFuture<>();
+            future.complete(result);
+            subscribers.put(key, future);
         }
     }
 
     @SuppressWarnings("unchecked")
     public <T> T registerAndWait(Object key, Long timeout) {
+        logger.trace(">>registerAndWait: " + key);
         try {
+            if (this.subscribers.get(key) != null) {
+                return (T) this.subscribers.get(key).get(timeout, TimeUnit.SECONDS);
+            }
             CompletableFuture<Object> future = new CompletableFuture<>();
             subscribers.put(key, future);
             return (T) future.get(timeout, TimeUnit.SECONDS);

@@ -65,6 +65,14 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
         this.channelsByName.remove(new Tuple2<>(channel.getName(), channel.getType()));
     }
 
+    public ChatChannel getLobbyChatChannel(String name) {
+        return this.channelsByName.get(new Tuple2<>("Lobby_" + name, DOTAChatChannelType_t.DOTAChannelType_Lobby));
+    }
+
+    public Map<Tuple2<String, DOTAChatChannelType_t>, ChatChannel> getChannelsByName() {
+        return channelsByName;
+    }
+
     private void handleJoinResponse(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAJoinChatChannelResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAJoinChatChannelResponse.class, msg);
@@ -181,6 +189,12 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
         logger.trace(">>getChannelList: " + protobuf.getBody());
     }
 
+    public void leaveChannels() {
+        for (Long channelId : channels.keySet()) {
+            leaveChannel(channelId);
+        }
+    }
+
     public void leaveChannel(Long channelId) {
         if (channels.containsKey(channelId)) {
             ChatChannel channel = channels.get(channelId);
@@ -196,7 +210,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void sendChannelMessage(String message) {
+    public void sendAllChannelMessage(String message) {
         channels.values().forEach(chat -> chat.send(message));
     }
 

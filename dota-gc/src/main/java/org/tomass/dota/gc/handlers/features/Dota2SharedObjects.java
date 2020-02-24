@@ -14,11 +14,11 @@ import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedParty;
-import org.tomass.dota.gc.util.Tuple2;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgClientWelcome;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed.SubscribedType;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheUnsubscribed;
+import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOIDOwner;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOMultipleObjects;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOMultipleObjects.SingleObject;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOSingleObject;
@@ -41,7 +41,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
-    private Map<Tuple2<Integer, Long>, List<SubscribedType>> cache;
+    private Map<CMsgSOIDOwner, List<SubscribedType>> cache;
 
     public Dota2SharedObjects() {
         dispatchMap = new HashMap<>();
@@ -94,8 +94,8 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgSOCacheSubscribed.Builder> subs = new ClientGCMsgProtobuf<>(CMsgSOCacheSubscribed.class,
                 packetMsg);
 
-        cache.put(new Tuple2<>(subs.getBody().getOwnerSoid().getType(), subs.getBody().getOwnerSoid().getId()),
-                subs.getBody().getObjectsList());
+        logger.trace("handleSubscribed: " + subs.getBody().getOwnerSoid());
+        cache.put(subs.getBody().getOwnerSoid(), subs.getBody().getObjectsList());
         for (SubscribedType sub : subs.getBody().getObjectsList()) {
             for (ByteString data : sub.getObjectDataList()) {
                 handleSingleObject(ACTION.NEW, sub.getTypeId(), data);
@@ -106,8 +106,9 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
     private void handleUnsubscibed(IPacketGCMsg packetMsg) {
         ClientGCMsgProtobuf<CMsgSOCacheUnsubscribed.Builder> unsubs = new ClientGCMsgProtobuf<>(
                 CMsgSOCacheUnsubscribed.class, packetMsg);
-        List<SubscribedType> subs = cache
-                .get(new Tuple2<>(unsubs.getBody().getOwnerSoid().getType(), unsubs.getBody().getOwnerSoid().getId()));
+
+        logger.trace("handleUnsubscibed: " + unsubs.getBody().getOwnerSoid());
+        List<SubscribedType> subs = cache.get(unsubs.getBody().getOwnerSoid());
         if (subs != null) {
             for (SubscribedType sub : subs) {
                 for (ByteString data : sub.getObjectDataList()) {
@@ -122,6 +123,8 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
                 packetMsg);
 
         for (CMsgSOCacheSubscribed subs : welcome.getBody().getOutofdateSubscribedCachesList()) {
+            logger.trace("handleClientWelcome: " + subs.getOwnerSoid());
+            cache.put(subs.getOwnerSoid(), subs.getObjectsList());
             for (SubscribedType sub : subs.getObjectsList()) {
                 for (ByteString data : sub.getObjectDataList()) {
                     handleSingleObject(ACTION.NEW, sub.getTypeId(), data);

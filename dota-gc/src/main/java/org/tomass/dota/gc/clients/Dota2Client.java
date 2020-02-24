@@ -1,9 +1,7 @@
 package org.tomass.dota.gc.clients;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
@@ -20,6 +18,8 @@ import org.tomass.dota.gc.handlers.features.Dota2Player;
 import org.tomass.dota.gc.handlers.features.Dota2SharedObjects;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 import org.tomass.dota.steam.handlers.SteamUser;
+import org.tomass.protobuf.dota.BaseGcmessages.CMsgGCError;
+import org.tomass.protobuf.dota.BaseGcmessages.EGCBaseMsg;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAWelcome;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAWelcome.CExtraMsg;
 import org.tomass.protobuf.dota.DotaGcmessagesCommon.EDOTAGCSessionNeed;
@@ -44,6 +44,7 @@ import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.C
 import in.dragonbra.javasteam.steam.handlers.steamuser.callback.LoggedOnCallback;
 import in.dragonbra.javasteam.util.MsgUtil;
 import in.dragonbra.javasteam.util.compat.Consumer;
+import in.dragonbra.javasteam.util.event.ScheduledFunction;
 
 public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler {
 
@@ -59,7 +60,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
-    private CompletableFuture<Void> retryWelcomeLoop;
+    private ScheduledFunction welcomeFunc;
 
     protected Dota2Lobby lobbyHandler;
 
@@ -78,14 +79,27 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         dispatchMap = new HashMap<>();
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientWelcome_VALUE, packetMsg -> handleWelcome(packetMsg));
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientConnectionStatus_VALUE, packetMsg -> handleStatus(packetMsg));
+        dispatchMap.put(EGCBaseMsg.k_EMsgGCError_VALUE, packetMsg -> handleError(packetMsg));
 
         gameCoordinator.getDispatchMap().put(EMsg.ClientPlayingSessionState,
                 packetMsg -> handlePlaySessState(packetMsg));
+        welcomeFunc = new ScheduledFunction(new Runnable() {
+            @Override
+            public void run() {
+                if (!ready)
+                    sayHello();
+            }
+        }, 5000);
+    }
+
+    private void handleError(IPacketGCMsg msg) {
+        ClientGCMsgProtobuf<CMsgGCError.Builder> error = new ClientGCMsgProtobuf<>(CMsgGCError.class, msg);
+        logger.error("GC error " + error.getBody().getErrorText());
     }
 
     private void handleWelcome(IPacketGCMsg msg) {
         try {
-            setConnectionStatus(GCConnectionStatus.GCConnectionStatus_HAVE_SESSION);
+            logger.info("welcome");
             ClientGCMsgProtobuf<CMsgClientWelcome.Builder> welcome = new ClientGCMsgProtobuf<>(CMsgClientWelcome.class,
                     msg);
             CMsgDOTAWelcome dotaWelcome = CMsgDOTAWelcome.parseFrom(welcome.getBody().getGameData());
@@ -94,7 +108,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
             for (CExtraMsg extraMessage : dotaWelcome.getExtraMessagesList()) {
                 processGcMessage(extraMessage.getId(), extraMessage.getContents());
             }
-            logger.info("welcome");
+            setConnectionStatus(GCConnectionStatus.GCConnectionStatus_HAVE_SESSION);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -115,7 +129,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     }
 
     private void handleDisconnect() {
-        logger.info("handleDisconnect " + retryWelcomeLoop);
+        logger.info("handleDisconnect " + welcomeFunc);
         exit();
     }
 
@@ -152,30 +166,14 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         }
     }
 
-    private void knockOnGc() {
-        while (true) {
-            try {
-                if (!ready) {
-                    sayHello();
-                }
-                Thread.sleep(60000);
-            } catch (Exception e) {
-                logger.error("!!knockOnGc: ", e);
-                e.printStackTrace();
-            }
-        }
-    }
-
     public void launch() {
         if (!logged) {
             return;
         }
         logger.info("Launching GC");
         try {
-            if (retryWelcomeLoop == null && !user.getCurrentGamesPlayed().contains(APP_ID)) {
-                user.gamesPlayed(Arrays.asList(APP_ID));
-                retryWelcomeLoop = CompletableFuture.runAsync(() -> knockOnGc());
-            }
+            user.gamePlayed(APP_ID);
+            welcomeFunc.start();
         } catch (Exception e) {
             logger.error("!!launch: ", e);
             e.printStackTrace();
@@ -183,15 +181,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     }
 
     public void exit() {
-        if (retryWelcomeLoop != null) {
-            retryWelcomeLoop.cancel(true);
-            retryWelcomeLoop = null;
-        }
-
-        if (user.getCurrentGamesPlayed().contains(APP_ID)) {
-            user.getCurrentGamesPlayed().remove(APP_ID);
-            user.gamesPlayed(user.getCurrentGamesPlayed());
-        }
+        welcomeFunc.stop();
+        user.getCurrentGamesPlayed().remove(APP_ID);
         setConnectionStatus(GCConnectionStatus.GCConnectionStatus_NO_SESSION);
     }
 
@@ -210,13 +201,13 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         super.init();
         addHandler(gameCoordinator = new Dota2SteamGameCoordinator());
         addHandler(user = new SteamUser());
-        gameCoordinator.addHandler(this);
         gameCoordinator.addDota2Handler(sharedObjectsHandler = new Dota2SharedObjects());
         gameCoordinator.addDota2Handler(chatHandler = new Dota2Chat());
         gameCoordinator.addDota2Handler(matchHandler = new Dota2Match());
         gameCoordinator.addDota2Handler(partyHandler = new Dota2Party());
         gameCoordinator.addDota2Handler(lobbyHandler = new Dota2Lobby());
         gameCoordinator.addDota2Handler(playerHandler = new Dota2Player());
+        gameCoordinator.addHandler(this);
     }
 
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {

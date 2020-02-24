@@ -1,9 +1,9 @@
 package org.tomass.dota.steam.handlers;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import in.dragonbra.javasteam.base.ClientMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketMsg;
@@ -16,11 +16,11 @@ public class SteamUser extends ClientMsgHandler {
 
     private Map<EMsg, Consumer<IPacketMsg>> dispatchMap;
 
-    private List<Integer> currentGamesPlayed;
+    private Set<Integer> currentGamesPlayed;
 
     public SteamUser() {
         dispatchMap = new HashMap<>();
-        currentGamesPlayed = new ArrayList<>();
+        currentGamesPlayed = new HashSet<>();
     }
 
     @Override
@@ -35,18 +35,16 @@ public class SteamUser extends ClientMsgHandler {
         }
     }
 
-    public void gamesPlayed(List<Integer> appIds) {
-        currentGamesPlayed.addAll(appIds);
+    public void gamePlayed(Integer appId) {
         ClientMsgProtobuf<CMsgClientGamesPlayed.Builder> playGame = new ClientMsgProtobuf<>(CMsgClientGamesPlayed.class,
                 EMsg.ClientGamesPlayed);
 
-        for (Integer appId : appIds) {
-            playGame.getBody().addGamesPlayedBuilder().setGameId(appId);
-        }
+        playGame.getBody().addGamesPlayedBuilder().setGameId(appId);
         client.send(playGame);
+        currentGamesPlayed.add(appId);
     }
 
-    public List<Integer> getCurrentGamesPlayed() {
+    public Set<Integer> getCurrentGamesPlayed() {
         return currentGamesPlayed;
     }
 

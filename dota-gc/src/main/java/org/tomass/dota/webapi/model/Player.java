@@ -6,6 +6,7 @@ public class Player {
 
     private String name;
     private Integer netWorth;
+    private Integer accountId;
 
     public Player() {
     }
@@ -33,9 +34,17 @@ public class Player {
         this.netWorth = netWorth;
     }
 
+    public Integer getAccountId() {
+        return accountId;
+    }
+
+    public void setAccountId(Integer accountId) {
+        this.accountId = accountId;
+    }
+
     @Override
     public String toString() {
-        return "Player [name=" + name + ", netWorth=" + netWorth + "]";
+        return "Player [name=" + name + ", netWorth=" + netWorth + ", accountId=" + accountId + "]";
     }
 
 }

@@ -7,15 +7,19 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
+import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueAvailableLobbyNodes;
+import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueInfoAdmin;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyUpdatedCallback;
+import org.tomass.dota.gc.handlers.callbacks.lobby.PracticeLobbyCallback;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
+import org.tomass.dota.gc.handlers.features.Dota2Chat.ChatChannel;
 import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.dota.gc.util.ServerRegions;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
@@ -33,6 +37,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgLobbyLis
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyCreate;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyJoin;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyJoinBroadcastChannel;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyJoinResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyKick;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyKickFromTeam;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyLaunch;
@@ -41,12 +46,17 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetTeamSlot;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodes;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodesRequest;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfoList;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfoListAdminsRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobbyInvite;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.LobbyDotaTVDelay;
 import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTABotDifficulty;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTALobbyVisibility;
+import org.tomass.protobuf.dota.DotaSharedEnums.DOTASelectionPriorityRules;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GC_TEAM;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GameMode;
 
@@ -54,6 +64,9 @@ import com.google.protobuf.ByteString;
 
 import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
+import in.dragonbra.javasteam.enums.EAccountType;
+import in.dragonbra.javasteam.enums.EUniverse;
+import in.dragonbra.javasteam.types.SteamID;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2Lobby extends Dota2ClientGCMsgHandler {
@@ -67,16 +80,36 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     public Dota2Lobby() {
         dispatchMap = new HashMap<>();
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCPracticeLobbyListResponse_VALUE,
-                packetMsg -> handlePracticeLobby(packetMsg));
+                packetMsg -> handlePracticeLobbyList(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListResponse_VALUE,
                 packetMsg -> handleFriendPracticeLobby(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE, packetMsg -> handleLobby(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCPracticeLobbyResponse_VALUE, packetMsg -> handlePracticeLobby(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueInfoListAdminsReponse_VALUE,
+                packetMsg -> handleLeagueInfoAdmins(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodes_VALUE,
+                packetMsg -> handleLeagueAvaiableNodes(packetMsg));
+    }
+
+    @Override
+    public void setup(Dota2SteamGameCoordinator gameCoordinator) {
+        super.setup(gameCoordinator);
+        client.getManager().subscribe(SingleObjectNewLobby.class, this::onSingleObjectNew);
+        client.getManager().subscribe(SingleObjectUpdatedLobby.class, this::onSingleObjectUpdated);
+        client.getManager().subscribe(SingleObjectRemovedLobby.class, this::onSingleObjectRemoved);
     }
 
     private void handlePracticeLobby(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgPracticeLobbyJoinResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgPracticeLobbyJoinResponse.class, data);
+        logger.trace(">>handlePracticeLobby: " + protobuf.getBody() + " /" + data.getTargetJobID());
+        client.postCallback(new PracticeLobbyCallback(data.getTargetJobID(), protobuf.getBody().getResult()));
+    }
+
+    private void handlePracticeLobbyList(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyListResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyListResponse.class, data);
-        logger.trace(">>handlePracticeLobby: " + protobuf.getBody() + " /" + data.getTargetJobID());
+        logger.trace(">>handlePracticeLobbyList: " + protobuf.getBody() + " /" + data.getTargetJobID());
         client.postCallback(new LobbyCallback(data.getTargetJobID(), protobuf.getBody().getLobbiesList()));
     }
 
@@ -94,12 +127,18 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         client.postCallback(data.getMsgType(), new LobbyCallback(protobuf.getBody().getLobbiesList()));
     }
 
-    @Override
-    public void setup(Dota2SteamGameCoordinator gameCoordinator) {
-        super.setup(gameCoordinator);
-        client.getManager().subscribe(SingleObjectNewLobby.class, this::onSingleObjectNew);
-        client.getManager().subscribe(SingleObjectUpdatedLobby.class, this::onSingleObjectUpdated);
-        client.getManager().subscribe(SingleObjectRemovedLobby.class, this::onSingleObjectRemoved);
+    private void handleLeagueInfoAdmins(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgDOTALeagueInfoList.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgDOTALeagueInfoList.class, data);
+        logger.trace(">>handleLeagueInfoAdmins: " + protobuf.getBody());
+        client.postCallback(new LeagueInfoAdmin(data.getTargetJobID(), protobuf.getBody()));
+    }
+
+    private void handleLeagueAvaiableNodes(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodes.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgDOTALeagueAvailableLobbyNodes.class, data);
+        logger.trace(">>handleLeagueAvaiableNodes: " + protobuf.getBody());
+        client.postCallback(new LeagueAvailableLobbyNodes(data.getTargetJobID(), protobuf.getBody()));
     }
 
     private void onSingleObjectNew(SingleObjectNewLobby callback) {
@@ -128,6 +167,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     }
 
     private void onSingleObjectRemoved(SingleObjectRemovedLobby callback) {
+        logger.debug("!!onSingleObjectRemoved with type: " + callback.getTypeId());
         switch (callback.getTypeId()) {
         case CSOTypes.LOBBY_INVITE_VALUE:
             handleLobbyInviteRemoved(callback.getData());
@@ -139,10 +179,6 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             logger.debug("!!onSingleObjectRemoved with type: " + callback.getTypeId());
             break;
         }
-    }
-
-    public void lobbyCleanup() {
-        this.lobby = null;
     }
 
     public void handleLobbyInvite(ByteString data) {
@@ -170,7 +206,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyNew: " + lobby);
             this.lobby = lobby;
-            client.postCallback(new LobbyNewCallback(lobby));
+            client.postCallback(CSOTypes.LOBBY_VALUE, new LobbyNewCallback(lobby));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -190,7 +226,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     public void handleLobbyRemoved(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
-            logger.trace(">>handleLobbyUpdated: " + lobby);
+            logger.trace(">>handleLobbyRemoved: " + lobby);
             this.lobby = null;
             client.postCallback(new LobbyRemovedCallback(lobby));
         } catch (Exception e) {
@@ -199,15 +235,46 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     }
 
     // actions
-    public void createPracticeLobby(String passKey) {
+    public PracticeLobbyCallback createPracticeLobby(String passKey, String name) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
-        protobuf.getBody().setPassKey(passKey);
         protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
-                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120).setGameName(UUID.randomUUID().toString())
-                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Unlisted);
-        logger.trace(">>respondToPartyInvite: " + protobuf.getBody());
-        send(protobuf);
+                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
+                .setGameName(name == null ? UUID.randomUUID().toString() : name)
+                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
+                .setServerRegion(ServerRegions.AUSTRIA.getNumber()).setPassKey(passKey).setAllowSpectating(true);
+        logger.trace(">>createPracticeLobby: " + protobuf.getBody());
+        return sendJobAndWait(protobuf, 10l);
+    }
+
+    public PracticeLobbyCallback createTournamentLobby(String passKey, String name) {
+        ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
+        protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
+                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
+                .setGameName(name == null ? UUID.randomUUID().toString() : name)
+                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
+                .setServerRegion(ServerRegions.AUSTRIA.getNumber()).setPassKey(passKey).setAllowSpectating(true)
+                .setGameMode(DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE)
+                .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic)
+                .setSeriesType(1);
+        logger.trace(">>createTournamentLobby: " + protobuf.getBody());
+        return sendJobAndWait(protobuf, 10l);
+    }
+
+    public PracticeLobbyCallback createTournamentLobby(String passKey, String name, Integer leagueId, Integer nodeId) {
+        ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
+        protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
+                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
+                .setGameName(name == null ? UUID.randomUUID().toString() : name)
+                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
+                .setServerRegion(ServerRegions.EUROPE.getNumber()).setPassKey(passKey).setAllowSpectating(true)
+                .setGameMode(DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE)
+                .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic)
+                .setSeriesType(1).setLeagueid(leagueId).setLeagueNodeId(nodeId);
+        logger.trace(">>createTournamentLobby: " + protobuf.getBody());
+        return sendJobAndWait(protobuf, 10l);
     }
 
     public void configPracticeLobby(CMsgPracticeLobbySetDetails options) {
@@ -263,6 +330,10 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         send(protobuf);
     }
 
+    public void inviteToLobby(Integer accountId) {
+        inviteToLobby(new SteamID(accountId, EUniverse.Public, EAccountType.Individual).convertToUInt64());
+    }
+
     public void inviteToLobby(long steamId) {
         if (lobby == null) {
             return;
@@ -270,7 +341,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgInviteToLobby.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgInviteToLobby.class,
                 EGCBaseMsg.k_EMsgGCInviteToLobby_VALUE);
         protobuf.getBody().setSteamId(steamId);
-        logger.trace(">>flipLobbyTeams: " + protobuf.getBody());
+        logger.trace(">>inviteToLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -338,7 +409,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         send(protobuf);
     }
 
-    public void joinPracticeLobbyTeam(DOTA_GC_TEAM team, int slot) {
+    public void practiceLobbySetTeamSlot(DOTA_GC_TEAM team, int slot) {
         if (lobby == null) {
             return;
         }
@@ -346,7 +417,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 CMsgPracticeLobbySetTeamSlot.class, EDOTAGCMsg.k_EMsgGCPracticeLobbySetTeamSlot_VALUE);
         protobuf.getBody().setTeam(team);
         protobuf.getBody().setSlot(slot);
-        logger.trace(">>joinPracticeLobbyTeam: " + protobuf.getBody());
+        logger.trace(">>practiceLobbySetTeamSlot: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -389,6 +460,31 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 CMsgDOTADestroyLobbyRequest.class, EDOTAGCMsg.k_EMsgDestroyLobbyRequest_VALUE);
         logger.trace(">>destroyLobby: " + protobuf.getBody());
         send(protobuf);
+    }
+
+    public LeagueInfoAdmin requestLeagueInfoAdmins() {
+        ClientGCMsgProtobuf<CMsgDOTALeagueInfoListAdminsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgDOTALeagueInfoListAdminsRequest.class, EDOTAGCMsg.k_EMsgDOTALeagueInfoListAdminsRequest_VALUE);
+        logger.trace(">>destroyLobby: " + protobuf.getBody());
+        return sendJobAndWait(protobuf, 10l);
+    }
+
+    public LeagueAvailableLobbyNodes requestLeagueAvaiableNodes(Integer leagujeId) {
+        ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodesRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgDOTALeagueAvailableLobbyNodesRequest.class,
+                EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodesRequest_VALUE);
+        protobuf.getBody().setLeagueId(leagujeId);
+        logger.trace(">>requestLeagueAvaiableNodes: " + protobuf.getBody());
+        return sendJobAndWait(protobuf, 10l);
+    }
+
+    public void sendLobbyMessage(String text) {
+        if (lobby != null) {
+            ChatChannel channel = client.getChatHandler().getLobbyChatChannel(lobby.getLobbyId() + "");
+            if (channel != null) {
+                channel.send(text);
+            }
+        }
     }
 
     @Override

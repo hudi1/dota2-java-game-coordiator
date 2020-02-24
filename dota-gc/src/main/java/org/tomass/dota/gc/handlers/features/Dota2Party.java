@@ -166,6 +166,9 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
     }
 
     public void leaveParty() {
+        if (party == null) {
+            return;
+        }
         ClientGCMsgProtobuf<CMsgLeaveParty.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgLeaveParty.class,
                 EGCBaseMsg.k_EMsgGCLeaveParty_VALUE);
         logger.trace(">>leaveParty: " + protobuf.getBody());
