@@ -17,7 +17,9 @@ public class AppConfig {
     private Map<String, String> uzivateleHesla = new ConcurrentHashMap<>();
     private Map<String, String> uzivateleRole = new ConcurrentHashMap<>();
 
+    private List<ScheduledSeries> series;
     private Map<String, SteamClientConfig> clients;
+    private Map<String, String> chatCommands;
     private Map<Integer, String> heroes;
     private Map<Integer, String> notableplayers;
     private List<Long> steamIdAdmins;
@@ -27,6 +29,8 @@ public class AppConfig {
 
     public AppConfig() {
         clients = new ConcurrentHashMap<String, SteamClientConfig>();
+        setChatCommands(new ConcurrentHashMap<String, String>());
+        setSeries(new ArrayList<>());
         steamIdAdmins = new ArrayList<>();
     }
 
@@ -124,6 +128,30 @@ public class AppConfig {
 
     public void setNotableplayers(Map<Integer, String> notableplayers) {
         this.notableplayers = notableplayers;
+    }
+
+    public List<ScheduledSeries> getSeries() {
+        return series;
+    }
+
+    public void setSeries(List<ScheduledSeries> series) {
+        this.series = series;
+    }
+
+    public Map<String, String> getChatCommands() {
+        return chatCommands;
+    }
+
+    public void setChatCommands(Map<String, String> chatCommands) {
+        this.chatCommands = chatCommands;
+    }
+
+    @Override
+    public String toString() {
+        return "AppConfig [uzivateleHesla=" + uzivateleHesla + ", uzivateleRole=" + uzivateleRole + ", series=" + series
+                + ", clients=" + clients + ", chatCommands=" + chatCommands + ", heroes=" + heroes + ", notableplayers="
+                + notableplayers + ", steamIdAdmins=" + steamIdAdmins + ", steamWebApi=" + steamWebApi
+                + ", refreshDuration=" + refreshDuration + "]";
     }
 
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -18,6 +19,7 @@ import org.tomass.dota.gc.service.RestAuthenticationProvider;
 
 @SpringBootApplication
 @EnableGlobalMethodSecurity(securedEnabled = true)
+@EnableScheduling
 public class Dota2GCApplication extends SpringBootServletInitializer implements WebApplicationInitializer {
 
     public static void main(String[] args) {

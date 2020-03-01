@@ -100,7 +100,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 EDOTAGCMsg.k_EMsgProfileRequest_VALUE);
         logger.trace(">>requestProfile: " + protobuf.getBody());
         protobuf.getBody().setAccountId(accountId);
-        return sendJobAndWait(protobuf, 10l);
+        return sendJobAndWait(protobuf);
     }
 
     public ProfileCardResponse requestProfileCard(Integer accountId) {
@@ -108,7 +108,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 CMsgClientToGCGetProfileCard.class, EDOTAGCMsg.k_EMsgClientToGCGetProfileCard_VALUE);
         logger.trace(">>requestProfileCard: " + protobuf.getBody());
         protobuf.getBody().setAccountId(accountId);
-        return sendJobAndWait(protobuf, 10l);
+        return sendJobAndWait(protobuf);
     }
 
     public PlayerStatsResponse requestPlayerStats(Integer accountId) {
@@ -116,7 +116,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 CMsgClientToGCPlayerStatsRequest.class, EDOTAGCMsg.k_EMsgClientToGCPlayerStatsRequest_VALUE);
         protobuf.getBody().setAccountId(accountId);
         logger.trace(">>requestPlayerStats: " + protobuf.getBody());
-        return sendJobAndWait(protobuf, 10l);
+        return sendJobAndWait(protobuf);
     }
 
     @Deprecated
@@ -126,7 +126,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 CMsgGCPlayerInfoRequest.class, EDOTAGCMsg.k_EMsgGCPlayerInfoRequest_VALUE);
         protobuf.getBody().addPlayerInfosBuilder().setAccountId(accountId).build();
         logger.trace(">>requestPlayerStats: " + protobuf.getBody());
-        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCPlayerInfo_VALUE, 10l);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCPlayerInfo_VALUE);
     }
 
     public ConductScorecardCallback requestConductScorecard() {
@@ -134,14 +134,14 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 CMsgPlayerConductScorecardRequest.class,
                 EDOTAGCMsg.k_EMsgClientToGCLatestConductScorecardRequest_VALUE);
         logger.trace(">>requestConductScorecard: " + protobuf.getBody());
-        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgClientToGCLatestConductScorecard_VALUE, 10l);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgClientToGCLatestConductScorecard_VALUE);
     }
 
     public HeroStandings requestHeroStanding() {
         ClientGCMsgProtobuf<CMsgGCGetHeroStandings.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCGetHeroStandings.class, EDOTAGCMsg.k_EMsgGCGetHeroStandings_VALUE);
         logger.trace(">>requestHeroStanding: " + protobuf.getBody());
-        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCGetHeroStandingsResponse_VALUE, 10l);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCGetHeroStandingsResponse_VALUE);
     }
 
     @Override

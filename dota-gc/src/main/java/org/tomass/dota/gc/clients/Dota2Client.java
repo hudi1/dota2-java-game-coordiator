@@ -7,7 +7,6 @@ import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
-import org.tomass.dota.gc.handlers.callbacks.GCWelcomeCallback;
 import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
 import org.tomass.dota.gc.handlers.features.Dota2Chat;
@@ -103,7 +102,6 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
             ClientGCMsgProtobuf<CMsgClientWelcome.Builder> welcome = new ClientGCMsgProtobuf<>(CMsgClientWelcome.class,
                     msg);
             CMsgDOTAWelcome dotaWelcome = CMsgDOTAWelcome.parseFrom(welcome.getBody().getGameData());
-            postCallback(new GCWelcomeCallback(welcome.getBody()));
 
             for (CExtraMsg extraMessage : dotaWelcome.getExtraMessagesList()) {
                 processGcMessage(extraMessage.getId(), extraMessage.getContents());

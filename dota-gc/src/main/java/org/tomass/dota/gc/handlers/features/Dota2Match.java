@@ -144,7 +144,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
                 CMsgClientToGCFindTopSourceTVGames.class, EDOTAGCMsg.k_EMsgClientToGCFindTopSourceTVGames_VALUE);
         logger.trace(">>requestTopSourceTvGames: " + protobuf.getBody());
         protobuf.getBody().addLobbyIds(lobbyId);
-        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCToClientFindTopSourceTVGamesResponse_VALUE, 10l);
+        return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCToClientFindTopSourceTVGamesResponse_VALUE);
     }
 
     public void requestTopFriendMatches() {
@@ -177,7 +177,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
                 CMsgGCMatchDetailsRequest.class, EDOTAGCMsg.k_EMsgGCMatchDetailsRequest_VALUE);
         logger.trace(">>requestMatchDetails: " + protobuf.getBody());
         protobuf.getBody().setMatchId(matchId);
-        return sendJobAndWait(protobuf, 10l);
+        return sendJobAndWait(protobuf);
     }
 
     @Override

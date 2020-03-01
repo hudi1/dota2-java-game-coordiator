@@ -28,6 +28,14 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
         return gameCoordinator.sendJob(msg);
     }
 
+    public <T> T sendJobAndWait(IClientGCMsg msg) {
+        return gameCoordinator.sendJobAndWait(msg);
+    }
+
+    public <T> T sendCustomAndWait(IClientGCMsg msg, Object key) {
+        return gameCoordinator.sendCustomAndWait(msg, key);
+    }
+
     public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
         return gameCoordinator.sendJobAndWait(msg, timeout);
     }

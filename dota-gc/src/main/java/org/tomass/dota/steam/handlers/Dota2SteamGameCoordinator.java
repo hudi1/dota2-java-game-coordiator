@@ -148,6 +148,16 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         return jobID;
     }
 
+    public <T> T sendJobAndWait(IClientGCMsg msg) {
+        sendJob(msg);
+        return getClient().registerAndWait(msg.getSourceJobID());
+    }
+
+    public <T> T sendCustomAndWait(IClientGCMsg msg, Object key) {
+        send(msg);
+        return getClient().registerAndWait(key);
+    }
+
     public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
         sendJob(msg);
         return getClient().registerAndWait(msg.getSourceJobID(), timeout);

@@ -6,8 +6,8 @@ public class RealtimeStats {
 
     private static final String TEAMS = "teams";
 
-    private Team radiant;
-    private Team dire;
+    private TeamInfo radiant;
+    private TeamInfo dire;
 
     public RealtimeStats() {
     }
@@ -15,24 +15,24 @@ public class RealtimeStats {
     public static RealtimeStats parseFrom(KeyValue keyValue) {
         RealtimeStats stats = new RealtimeStats();
         KeyValue teams = keyValue.get(TEAMS);
-        stats.setRadiant(Team.parseFrom(teams.get("0")));
-        stats.setDire(Team.parseFrom(teams.get("1")));
+        stats.setRadiant(TeamInfo.parseFromRealTimeStat(teams.get("0")));
+        stats.setDire(TeamInfo.parseFromRealTimeStat(teams.get("1")));
         return stats;
     }
 
-    public Team getRadiant() {
+    public TeamInfo getRadiant() {
         return radiant;
     }
 
-    public void setRadiant(Team radiant) {
+    public void setRadiant(TeamInfo radiant) {
         this.radiant = radiant;
     }
 
-    public Team getDire() {
+    public TeamInfo getDire() {
         return dire;
     }
 
-    public void setDire(Team dire) {
+    public void setDire(TeamInfo dire) {
         this.dire = dire;
     }
 

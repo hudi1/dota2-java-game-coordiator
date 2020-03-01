@@ -43,11 +43,12 @@ import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackManager;
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.ConnectedCallback;
 import in.dragonbra.javasteam.steam.steamclient.callbacks.DisconnectedCallback;
+import in.dragonbra.javasteam.steam.steamclient.configuration.SteamConfiguration;
 import in.dragonbra.javasteam.types.JobID;
 
 public class CommonSteamClient extends SteamClient {
 
-    public static final String JOB_ID_PREFIX = "JobId_";
+    public static final Long DEFAULT_TIMEOUT = 10l;
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -70,6 +71,7 @@ public class CommonSteamClient extends SteamClient {
     private Map<Object, CompletableFuture<Object>> subscribers = new HashMap<>();
 
     public CommonSteamClient(SteamClientConfig config, AppConfig appConfig) {
+        super(SteamConfiguration.create(c -> c.withWebAPIKey(appConfig.getSteamWebApi())));
         this.config = config;
         this.appConfig = appConfig;
         init();
@@ -291,6 +293,10 @@ public class CommonSteamClient extends SteamClient {
             future.complete(result);
             subscribers.put(key, future);
         }
+    }
+
+    public <T> T registerAndWait(Object key) {
+        return registerAndWait(key, DEFAULT_TIMEOUT);
     }
 
     @SuppressWarnings("unchecked")

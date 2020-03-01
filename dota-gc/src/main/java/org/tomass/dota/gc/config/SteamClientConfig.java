@@ -24,8 +24,6 @@ public class SteamClientConfig {
 
     private Integer lobbyCountMembers;
 
-    private Integer leagueId;
-
     public String getUser() {
         return user;
     }
@@ -114,21 +112,12 @@ public class SteamClientConfig {
         this.lobbyCountMembers = lobbyCountMembers;
     }
 
-    public Integer getLeagueId() {
-        return leagueId;
-    }
-
-    public void setLeagueId(Integer leagueId) {
-        this.leagueId = leagueId;
-    }
-
     @Override
     public String toString() {
         return "SteamClientConfig [user=" + user + ", pass=*****" + ", authCode=" + authCode + ", twoFactorAuth="
                 + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
                 + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
-                + ", partyCountMembers=" + partyCountMembers + ", lobbyCountMembers=" + lobbyCountMembers
-                + ", leagueId=" + leagueId + "]";
+                + ", partyCountMembers=" + partyCountMembers + ", lobbyCountMembers=" + lobbyCountMembers + "]";
     }
 
 }

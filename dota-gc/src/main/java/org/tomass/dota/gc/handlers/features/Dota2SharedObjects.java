@@ -14,6 +14,7 @@ import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedParty;
+import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgClientWelcome;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed.SubscribedType;
@@ -128,6 +129,9 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
             for (SubscribedType sub : subs.getObjectsList()) {
                 for (ByteString data : sub.getObjectDataList()) {
                     handleSingleObject(ACTION.NEW, sub.getTypeId(), data);
+                    if (CSOTypes.LOBBY_VALUE == sub.getTypeId()) {
+                        client.registerAndWait(sub.getTypeId());
+                    }
                 }
             }
         }
