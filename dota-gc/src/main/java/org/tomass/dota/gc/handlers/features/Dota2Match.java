@@ -13,7 +13,6 @@ import org.tomass.dota.gc.handlers.callbacks.match.MatchMakingStatsCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchesMinimalCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.RequestMatchesCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback;
-import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback.Game;
 import org.tomass.dota.gc.handlers.callbacks.match.WatchGameCallback;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAGetPlayerMatchHistoryResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAMatchmakingStatsRequest;
@@ -72,13 +71,9 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgGCToClientFindTopSourceTVGamesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientFindTopSourceTVGamesResponse.class, msg);
         logger.trace(">>handleTopSourceTv: " + protobuf.getBody());
-        TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody(), client.getAppConfig());
+        TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody());
         if (protobuf.getBody().getSpecificGames()) {
-            for (Game game : callback.getGames()) {
-                if (game.getLobbyId() != null && game.getLobbyId() > 0) {
-                    client.postCallback(msg.getMsgType(), game);
-                }
-            }
+            client.postCallback(msg.getMsgType(), callback);
         } else {
             client.postCallback(callback);
         }
@@ -139,7 +134,8 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     }
 
     // actions
-    public Game requestTopSourceTvGames(long lobbyId) {
+
+    public TopSourceTvGamesCallback requestTopSourceTvGames(long lobbyId) {
         ClientGCMsgProtobuf<CMsgClientToGCFindTopSourceTVGames.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCFindTopSourceTVGames.class, EDOTAGCMsg.k_EMsgClientToGCFindTopSourceTVGames_VALUE);
         logger.trace(">>requestTopSourceTvGames: " + protobuf.getBody());

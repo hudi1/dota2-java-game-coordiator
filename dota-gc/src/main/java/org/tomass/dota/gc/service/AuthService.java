@@ -1,9 +1,5 @@
 package org.tomass.dota.gc.service;
 
-/**
- * @author jan.hadas@i.cz
- */
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,32 +28,24 @@ public class AuthService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             if (StringUtils.isEmpty(username))
-                throw new UsernameNotFoundException("Uzivatel nebyl zadan");
+                throw new UsernameNotFoundException("User is empty");
 
-            String heslo = config.getUzivateleHesla().get(username);
+            String heslo = config.getUsersPass().get(username);
             if (StringUtils.isEmpty(heslo))
-                throw new UsernameNotFoundException("Heslo je prazdne");
+                throw new UsernameNotFoundException("Password is empty");
 
-            String[] _role = config.getUzivateleRole().containsKey(username)
-                    ? config.getUzivateleRole().get(username).split(",")
+            String[] _role = config.getUsersRole().containsKey(username)
+                    ? config.getUsersRole().get(username).split(",")
                     : new String[] {};
             List<SimpleGrantedAuthority> role = Arrays.asList(_role).stream()
                     .map(r -> new SimpleGrantedAuthority("ROLE_" + r)).collect(Collectors.toList());
-            log.debug("Uživatel " + username + " má role '" + role + "'");
+            log.debug("User " + username + " got role '" + role + "'");
 
             return new User(username, heslo, role);
         } catch (UsernameNotFoundException e) {
-            log.error("Uživatel " + username + " nebyl nalezen");
+            log.error("User " + username + " not found");
             throw e;
         }
-    }
-
-    public String zmenHeslo(String username, String heslo, boolean prvniHeslo) {
-        log.trace(">> zmenHeslo {}", username);
-
-        heslo = heslo.trim();
-        config.pridejUzivatel(username, heslo);
-        return "OK";
     }
 
 }

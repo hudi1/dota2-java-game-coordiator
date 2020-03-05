@@ -119,8 +119,8 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         return sendJobAndWait(protobuf);
     }
 
-    @Deprecated
     // Disabled by Valve
+    @Deprecated
     public PlayerInfoCallback requestPlayerInfo(Integer accountId) {
         ClientGCMsgProtobuf<CMsgGCPlayerInfoRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCPlayerInfoRequest.class, EDOTAGCMsg.k_EMsgGCPlayerInfoRequest_VALUE);

@@ -29,4 +29,5 @@ public class SingleObjectUpdatedLobby extends CallbackMsg {
     public void setData(ByteString data) {
         this.data = data;
     }
+
 }

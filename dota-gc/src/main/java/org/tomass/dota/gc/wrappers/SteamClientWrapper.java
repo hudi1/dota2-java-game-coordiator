@@ -4,16 +4,19 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.clients.impl.DotaClientImpl;
 import org.tomass.dota.gc.config.AppConfig;
+import org.tomass.dota.gc.config.ScheduledSeries;
 import org.tomass.dota.gc.config.SteamClientConfig;
+import org.tomass.dota.gc.handlers.callbacks.league.LeagueInfoAdmin;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
-import org.tomass.dota.webapi.model.TeamInfo;
 
 @Component
 public class SteamClientWrapper {
@@ -48,20 +51,39 @@ public class SteamClientWrapper {
         return null;
     }
 
-    public DotaClientImpl getClient() {
-        return clients.peek();
-    }
-
-    public LobbyNewCallback requestNewTeamLobby(Integer leagueId, TeamInfo teamInfo1, TeamInfo teamInfo2,
-            String password) {
+    public LobbyNewCallback requestNewTeamLobby(ScheduledSeries serie) {
         synchronized (clientLock) {
             for (DotaClientImpl client : clients) {
                 if (client.getLobbyHandler().getLobby() == null) {
-                    return client.requestNewTeamLobby(leagueId, teamInfo1, teamInfo2, password);
+                    return client.requestNewScheduledTeamLobby(serie);
                 }
             }
         }
         return null;
+    }
+
+    public boolean getLeagueAdmin(Integer leagueId) {
+        boolean admin = true;
+        for (Dota2Client client : clients) {
+            LeagueInfoAdmin admins = client.getLeagueHandler().requestLeagueInfoAdmins();
+            if (admins != null) {
+                if (!admins.getBody().getInfosList().stream().map(i -> i.getLeagueId()).collect(Collectors.toList())
+                        .contains(leagueId)) {
+                    admin = false;
+                }
+            } else {
+                admin = false;
+            }
+        }
+        return admin;
+    }
+
+    public DotaClientImpl getClient() {
+        return clients.peek();
+    }
+
+    public Queue<DotaClientImpl> getClients() {
+        return clients;
     }
 
 }

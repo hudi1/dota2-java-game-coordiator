@@ -150,8 +150,10 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
     private void handleInvitationCreated(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgInvitationCreated.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgInvitationCreated.class, msg);
-        logger.trace(">>handleInvitationCreated: " + protobuf.getBody());
-        client.postCallback(new PartyInvitationCreatedCallback(protobuf.getBody()));
+        if (party != null && party.getPartyId() == protobuf.getBody().getGroupId()) {
+            logger.trace(">>handleInvitationCreated: " + protobuf.getBody());
+            client.postCallback(new PartyInvitationCreatedCallback(protobuf.getBody()));
+        }
     }
 
     // actions

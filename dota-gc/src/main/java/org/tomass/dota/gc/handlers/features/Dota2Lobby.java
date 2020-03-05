@@ -2,15 +2,12 @@ package org.tomass.dota.gc.handlers.features;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
-import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueAvailableLobbyNodes;
-import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueInfoAdmin;
-import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueNodeCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyCallback;
+import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInvitationCreatedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
@@ -24,6 +21,7 @@ import org.tomass.dota.gc.handlers.features.Dota2Chat.ChatChannel;
 import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.dota.gc.util.ServerRegions;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
+import org.tomass.protobuf.dota.BaseGcmessages.CMsgInvitationCreated;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgInviteToLobby;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgLobbyInviteResponse;
 import org.tomass.protobuf.dota.BaseGcmessages.EGCBaseMsg;
@@ -47,22 +45,10 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetTeamSlot;
-import org.tomass.protobuf.dota.DotaGcmessagesClientWatch.CMsgClientToGCTopLeagueMatchesRequest;
-import org.tomass.protobuf.dota.DotaGcmessagesClientWatch.CMsgGCToClientFindTopLeagueMatchesResponse;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodes;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodesRequest;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfoList;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfoListAdminsRequest;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueLiveGames;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueNodeRequest;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueNodeResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobbyInvite;
-import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.LobbyDotaTVDelay;
 import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTABotDifficulty;
-import org.tomass.protobuf.dota.DotaSharedEnums.DOTALobbyVisibility;
-import org.tomass.protobuf.dota.DotaSharedEnums.DOTASelectionPriorityRules;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GC_TEAM;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GameMode;
 
@@ -91,16 +77,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 packetMsg -> handleFriendPracticeLobby(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE, packetMsg -> handleLobby(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCPracticeLobbyResponse_VALUE, packetMsg -> handlePracticeLobby(packetMsg));
-        dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueInfoListAdminsReponse_VALUE,
-                packetMsg -> handleLeagueInfoAdmins(packetMsg));
-        dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodes_VALUE,
-                packetMsg -> handleLeagueAvaiableNodes(packetMsg));
-        dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueNodeResponse_VALUE, packetMsg -> handleLeagueNode(packetMsg));
-        dispatchMap.put(EDOTAGCMsg.k_EMsgGCToGCGetLiveLeagueMatchesResponse_VALUE,
-                packetMsg -> handleLiveLeagueMatches(packetMsg));
-        dispatchMap.put(EDOTAGCMsg.k_EMsgGCToClientTopLeagueMatchesResponse_VALUE,
-                packetMsg -> handleTopLeagueMatches(packetMsg));
-
+        dispatchMap.put(EGCBaseMsg.k_EMsgGCInvitationCreated_VALUE, packetMsg -> handleInvitationCreated(packetMsg));
     }
 
     @Override
@@ -114,14 +91,14 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     private void handlePracticeLobby(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyJoinResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyJoinResponse.class, data);
-        logger.trace(">>handlePracticeLobby: " + protobuf.getBody() + " /" + data.getTargetJobID());
+        logger.trace(">>handlePracticeLobby: " + protobuf.getBody() + "/" + data.getTargetJobID());
         client.postCallback(new PracticeLobbyCallback(data.getTargetJobID(), protobuf.getBody().getResult()));
     }
 
     private void handlePracticeLobbyList(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyListResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyListResponse.class, data);
-        logger.trace(">>handlePracticeLobbyList: " + protobuf.getBody() + " /" + data.getTargetJobID());
+        logger.trace(">>handlePracticeLobbyList: " + protobuf.getBody() + "/" + data.getTargetJobID());
         client.postCallback(new LobbyCallback(data.getTargetJobID(), protobuf.getBody().getLobbiesList()));
     }
 
@@ -137,41 +114,6 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 CMsgLobbyListResponse.class, data);
         logger.trace(">>handleLobby: " + protobuf.getBody());
         client.postCallback(data.getMsgType(), new LobbyCallback(protobuf.getBody().getLobbiesList()));
-    }
-
-    private void handleLeagueInfoAdmins(IPacketGCMsg data) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueInfoList.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueInfoList.class, data);
-        logger.trace(">>handleLeagueInfoAdmins: " + protobuf.getBody());
-        client.postCallback(new LeagueInfoAdmin(data.getTargetJobID(), protobuf.getBody()));
-    }
-
-    private void handleLeagueAvaiableNodes(IPacketGCMsg data) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodes.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueAvailableLobbyNodes.class, data);
-        logger.trace(">>handleLeagueAvaiableNodes: " + protobuf.getBody());
-        client.postCallback(new LeagueAvailableLobbyNodes(data.getTargetJobID(), protobuf.getBody()));
-    }
-
-    private void handleLeagueNode(IPacketGCMsg data) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueNodeResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueNodeResponse.class, data);
-        logger.trace(">>handleLeagueNodeRequest: " + protobuf.getBody());
-        client.postCallback(new LeagueNodeCallback(data.getTargetJobID(), protobuf.getBody()));
-    }
-
-    private void handleLiveLeagueMatches(IPacketGCMsg data) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueLiveGames.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueLiveGames.class, data);
-        logger.trace(">>handleLiveLeagueMatches: " + protobuf.getBody());
-        // client.postCallback(new LeagueNodeCallback(data.getTargetJobID(), protobuf.getBody()));
-    }
-
-    private void handleTopLeagueMatches(IPacketGCMsg data) {
-        ClientGCMsgProtobuf<CMsgGCToClientFindTopLeagueMatchesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgGCToClientFindTopLeagueMatchesResponse.class, data);
-        logger.trace(">>handleTopLeagueMatches: " + protobuf.getBody());
-        // client.postCallback(new LeagueNodeCallback(data.getTargetJobID(), protobuf.getBody()));
     }
 
     private void onSingleObjectNew(SingleObjectNewLobby callback) {
@@ -267,53 +209,32 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
+    private void handleInvitationCreated(IPacketGCMsg msg) {
+        ClientGCMsgProtobuf<CMsgInvitationCreated.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgInvitationCreated.class, msg);
+        if (lobby != null && lobby.getLobbyId() == protobuf.getBody().getGroupId()) {
+            logger.trace(">>handleInvitationCreated: " + protobuf.getBody());
+            client.postCallback(new LobbyInvitationCreatedCallback(protobuf.getBody()));
+        }
+    }
+
     // actions
-    public PracticeLobbyCallback createPracticeLobby(String passKey, String name) {
+
+    public PracticeLobbyCallback createPracticeLobby(CMsgPracticeLobbySetDetails detail) {
         ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
-        protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
-                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
-                .setGameName(name == null ? UUID.randomUUID().toString() : name)
-                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
-                .setServerRegion(ServerRegions.AUSTRIA.getNumber()).setPassKey(passKey).setAllowSpectating(true);
+        protobuf.getBody().setLobbyDetails(detail);
+
         logger.trace(">>createPracticeLobby: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
-    }
-
-    public PracticeLobbyCallback createTournamentLobby(String passKey, String name) {
-        ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
-        protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
-                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
-                .setGameName(name == null ? UUID.randomUUID().toString() : name)
-                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
-                .setServerRegion(ServerRegions.AUSTRIA.getNumber()).setPassKey(passKey).setAllowSpectating(true)
-                .setGameMode(DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE)
-                .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic)
-                .setSeriesType(1);
-        logger.trace(">>createTournamentLobby: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
-    }
-
-    public PracticeLobbyCallback createTournamentLobby(String passKey, String name, Integer leagueId, Integer nodeId) {
-        ClientGCMsgProtobuf<CMsgPracticeLobbyCreate.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
-        protobuf.getBody().getLobbyDetailsBuilder().setAllowCheats(false)
-                .setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
-                .setGameName(name == null ? UUID.randomUUID().toString() : name)
-                .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
-                .setServerRegion(ServerRegions.EUROPE.getNumber()).setPassKey(passKey).setAllowSpectating(true)
-                .setGameMode(DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE)
-                .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic)
-                .setSeriesType(1).setLeagueid(leagueId).setLeagueNodeId(nodeId);
-        logger.trace(">>createTournamentLobby: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
     public void configPracticeLobby(CMsgPracticeLobbySetDetails options) {
         ClientGCMsgProtobuf<CMsgPracticeLobbySetDetails.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbySetDetails.class, EDOTAGCMsg.k_EMsgGCPracticeLobbySetDetails_VALUE);
+
         protobuf.getBody().mergeFrom(options);
+        protobuf.getBody().setLobbyId(lobby.getLobbyId());
         logger.trace(">>configPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
@@ -493,38 +414,6 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 CMsgDOTADestroyLobbyRequest.class, EDOTAGCMsg.k_EMsgDestroyLobbyRequest_VALUE);
         logger.trace(">>destroyLobby: " + protobuf.getBody());
         send(protobuf);
-    }
-
-    public LeagueInfoAdmin requestLeagueInfoAdmins() {
-        ClientGCMsgProtobuf<CMsgDOTALeagueInfoListAdminsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueInfoListAdminsRequest.class, EDOTAGCMsg.k_EMsgDOTALeagueInfoListAdminsRequest_VALUE);
-        logger.trace(">>destroyLobby: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
-    }
-
-    public LeagueAvailableLobbyNodes requestLeagueAvaiableNodes(Integer leagueId) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodesRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueAvailableLobbyNodesRequest.class,
-                EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodesRequest_VALUE);
-        protobuf.getBody().setLeagueId(leagueId);
-        logger.trace(">>requestLeagueAvaiableNodes: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
-    }
-
-    public LeagueNodeCallback requestLeagueNode(Integer leagueId, Integer nodeId) {
-        ClientGCMsgProtobuf<CMsgDOTALeagueNodeRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgDOTALeagueNodeRequest.class, EDOTAGCMsg.k_EMsgDOTALeagueNodeRequest_VALUE);
-        protobuf.getBody().setLeagueId(leagueId);
-        protobuf.getBody().setNodeId(nodeId);
-        logger.trace(">>requestLeagueNodeRequest: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
-    }
-
-    public LeagueNodeCallback requestTopLeagueMatches() {
-        ClientGCMsgProtobuf<CMsgClientToGCTopLeagueMatchesRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgClientToGCTopLeagueMatchesRequest.class, EDOTAGCMsg.k_EMsgClientToGCTopLeagueMatchesRequest_VALUE);
-        logger.trace(">>requestTopLeagueMatches: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
     }
 
     public void sendLobbyMessage(String text) {

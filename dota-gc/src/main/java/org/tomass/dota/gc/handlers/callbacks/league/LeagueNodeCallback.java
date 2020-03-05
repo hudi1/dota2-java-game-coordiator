@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.handlers.callbacks.lobby;
+package org.tomass.dota.gc.handlers.callbacks.league;
 
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueNodeResponse.Builder;
 

@@ -14,8 +14,8 @@ import org.springframework.util.Assert;
 
 public class AppConfig {
 
-    private Map<String, String> uzivateleHesla = new ConcurrentHashMap<>();
-    private Map<String, String> uzivateleRole = new ConcurrentHashMap<>();
+    private Map<String, String> usersPass = new ConcurrentHashMap<>();
+    private Map<String, String> usersRole = new ConcurrentHashMap<>();
 
     private List<ScheduledSeries> series;
     private Map<String, SteamClientConfig> clients;
@@ -34,52 +34,52 @@ public class AppConfig {
         steamIdAdmins = new ArrayList<>();
     }
 
-    public Map<String, String> getUzivateleHesla() {
-        return uzivateleHesla;
+    public Map<String, String> getUsersPass() {
+        return usersPass;
     }
 
-    public void setUzivateleHesla(Map<String, String> uzivateleHesla) {
-        this.uzivateleHesla = uzivateleHesla;
+    public void setUsersPass(Map<String, String> usersPass) {
+        this.usersPass = usersPass;
     }
 
-    public Map<String, String> getUzivateleRole() {
-        return uzivateleRole;
+    public Map<String, String> getUsersRole() {
+        return usersRole;
     }
 
-    public void setUzivateleRole(Map<String, String> uzivateleRole) {
-        this.uzivateleRole = uzivateleRole;
+    public void setUsersRole(Map<String, String> usersRole) {
+        this.usersRole = usersRole;
     }
 
-    public void pridejUzivatel(String uzivatel, String heslo) {
-        Assert.notNull(uzivatel, "uzivatel je pozadovan");
-        Assert.notNull(heslo, "heslo je pozadovano");
+    public void addUser(String user, String password) {
+        Assert.notNull(user, "User is required");
+        Assert.notNull(password, "Password is required");
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-        String hashedPassword = passwordEncoder.encode(heslo);
-        uzivateleHesla.put(uzivatel, hashedPassword);
+        String hashedPassword = passwordEncoder.encode(password);
+        usersPass.put(user, hashedPassword);
     }
 
-    public void vymazUzivatel(String uzivatel) {
-        Assert.notNull(uzivatel, "uzivatel je pozadovan");
-        uzivateleHesla.remove(uzivatel);
-        uzivateleRole.remove(uzivatel);
+    public void removeUser(String uzivatel) {
+        Assert.notNull(uzivatel, "User is required");
+        usersPass.remove(uzivatel);
+        usersRole.remove(uzivatel);
     }
 
-    public void pridejUzivatelRole(String uzivatel, String... role) {
-        Assert.notNull(uzivatel, "uzivatel je pozadovan");
-        String[] _role = uzivateleRole.containsKey(uzivatel) ? uzivateleRole.get(uzivatel).split(",") : new String[] {};
+    public void addRoles(String uzivatel, String... role) {
+        Assert.notNull(uzivatel, "User is required");
+        String[] _role = usersRole.containsKey(uzivatel) ? usersRole.get(uzivatel).split(",") : new String[] {};
         Set<String> roleSet = new HashSet<>();
         roleSet.addAll(Arrays.asList(_role));
         roleSet.addAll(Arrays.asList(role));
-        uzivateleRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
+        usersRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
     }
 
-    public void vymazUzivatelRole(String uzivatel, String... role) {
-        Assert.notNull(uzivatel, "uzivatel je pozadovan");
-        String[] _role = uzivateleRole.containsKey(uzivatel) ? uzivateleRole.get(uzivatel).split(",") : new String[] {};
+    public void removeRoles(String uzivatel, String... role) {
+        Assert.notNull(uzivatel, "User is required");
+        String[] _role = usersRole.containsKey(uzivatel) ? usersRole.get(uzivatel).split(",") : new String[] {};
         Set<String> roleSet = new HashSet<>();
         roleSet.addAll(Arrays.asList(_role));
         roleSet.removeAll(Arrays.asList(role));
-        uzivateleRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
+        usersRole.put(uzivatel, roleSet.stream().collect(Collectors.joining(",")));
     }
 
     public Map<String, SteamClientConfig> getClients() {
@@ -148,8 +148,8 @@ public class AppConfig {
 
     @Override
     public String toString() {
-        return "AppConfig [uzivateleHesla=" + uzivateleHesla + ", uzivateleRole=" + uzivateleRole + ", series=" + series
-                + ", clients=" + clients + ", chatCommands=" + chatCommands + ", heroes=" + heroes + ", notableplayers="
+        return "AppConfig [usersPass=" + usersPass + ", usersRole=" + usersRole + ", series=" + series + ", clients="
+                + clients + ", chatCommands=" + chatCommands + ", heroes=" + heroes + ", notableplayers="
                 + notableplayers + ", steamIdAdmins=" + steamIdAdmins + ", steamWebApi=" + steamWebApi
                 + ", refreshDuration=" + refreshDuration + "]";
     }

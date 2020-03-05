@@ -10,6 +10,7 @@ import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
 import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
 import org.tomass.dota.gc.handlers.features.Dota2Chat;
+import org.tomass.dota.gc.handlers.features.Dota2League;
 import org.tomass.dota.gc.handlers.features.Dota2Lobby;
 import org.tomass.dota.gc.handlers.features.Dota2Match;
 import org.tomass.dota.gc.handlers.features.Dota2Party;
@@ -70,6 +71,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     protected Dota2Match matchHandler;
 
     protected Dota2Player playerHandler;
+
+    protected Dota2League leagueHandler;
 
     protected Dota2SharedObjects sharedObjectsHandler;
 
@@ -205,6 +208,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         gameCoordinator.addDota2Handler(partyHandler = new Dota2Party());
         gameCoordinator.addDota2Handler(lobbyHandler = new Dota2Lobby());
         gameCoordinator.addDota2Handler(playerHandler = new Dota2Player());
+        gameCoordinator.addDota2Handler(leagueHandler = new Dota2League());
         gameCoordinator.addHandler(this);
     }
 
@@ -249,6 +253,10 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     public Dota2Player getPlayerHandler() {
         return playerHandler;
+    }
+
+    public Dota2League getLeagueHandler() {
+        return leagueHandler;
     }
 
     public boolean isReady() {

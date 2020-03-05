@@ -9,13 +9,13 @@ import org.tomass.dota.gc.clients.impl.DotaClientImpl;
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.LobbyMatch;
 import org.tomass.dota.gc.config.ScheduledSeries;
-import org.tomass.dota.gc.handlers.callbacks.lobby.LeagueNodeCallback;
+import org.tomass.dota.gc.handlers.callbacks.league.LeagueNodeCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
 import org.tomass.dota.gc.util.DotaGlobalConstant;
 import org.tomass.dota.gc.wrappers.SteamClientWrapper;
 
 @Component
-public class ScheduledLobbyNewTask {
+public class SeriesLobbyTask {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -25,16 +25,16 @@ public class ScheduledLobbyNewTask {
     @Autowired
     private SteamClientWrapper steamClient;
 
-    @Scheduled(cron = "1 * * * * *")
+    @Scheduled(cron = "${task.seriesLobbyTask}")
     public void scheduled() {
-        logger.trace(">>scheduledLobbyNewTask");
+        logger.trace(">>seriesLobbyTask");
         for (ScheduledSeries scheduledLobby : config.getSeries()) {
             if (scheduledLobby.getState().equals(DotaGlobalConstant.LOBBY_SERIES_LIVE)
                     || scheduledLobby.getState().equals(DotaGlobalConstant.LOBBY_SERIES_RUNNING)) {
                 DotaClientImpl client = steamClient.getClient();
                 if (client != null && client.getLobbyHandler().getLobby() == null
                         && scheduledLobby.getLeagueId() != null && scheduledLobby.getNodeId() != null) {
-                    LeagueNodeCallback leagueNode = client.getLobbyHandler()
+                    LeagueNodeCallback leagueNode = client.getLeagueHandler()
                             .requestLeagueNode(scheduledLobby.getLeagueId(), scheduledLobby.getNodeId());
                     if (leagueNode != null && leagueNode.getBody().hasNode()) {
                         Integer team1Wins;
@@ -54,7 +54,7 @@ public class ScheduledLobbyNewTask {
                             scheduledLobby.getTeamInfo2().setWins(team2Wins);
                             scheduledLobby.setState(DotaGlobalConstant.LOBBY_SERIES_RUNNING);
                         } else {
-                            logger.trace("==scheduledLobbyNewTask: Game is still live "
+                            logger.debug("==scheduledLobbyNewTask: Game is still live "
                                     + scheduledLobby.getTeamInfo1().getName() + " vs "
                                     + scheduledLobby.getTeamInfo2().getName());
                         }
@@ -64,9 +64,7 @@ public class ScheduledLobbyNewTask {
                         }
 
                         if (scheduledLobby.getState() == DotaGlobalConstant.LOBBY_SERIES_RUNNING) {
-                            LobbyNewCallback callback = client.requestNewTeamLobby(scheduledLobby.getLeagueId(),
-                                    scheduledLobby.getTeamInfo1(), scheduledLobby.getTeamInfo2(),
-                                    scheduledLobby.getPassword());
+                            LobbyNewCallback callback = client.requestNewScheduledTeamLobby(scheduledLobby);
                             if (callback != null) {
                                 scheduledLobby.setState(DotaGlobalConstant.LOBBY_SERIES_CREATED);
                                 scheduledLobby.getMatches().add(new LobbyMatch(callback.getLobby().getMatchId(),
@@ -77,6 +75,6 @@ public class ScheduledLobbyNewTask {
                 }
             }
         }
-        logger.trace("<<scheduledLobbyNewTask");
+        logger.trace("<<seriesLobbyTask");
     }
 }

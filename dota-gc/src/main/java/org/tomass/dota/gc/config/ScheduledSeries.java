@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.tomass.dota.gc.util.DotaGlobalConstant;
 import org.tomass.dota.webapi.model.TeamInfo;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 
 public class ScheduledSeries {
 
@@ -22,25 +23,39 @@ public class ScheduledSeries {
 
     private Integer seriesId;
 
+    private String seriesName;
+
     private Integer nodeId;
 
+    private String nodeName;
+
+    private boolean nodeFound;
+
     private Integer leagueId;
+
+    private String leagueName;
+
+    private boolean admin;
 
     private Integer state;
 
     private List<LobbyMatch> matches;
 
+    private CMsgPracticeLobbySetDetails.Builder detail;
+
     public ScheduledSeries() {
         this.matches = new ArrayList<>();
     }
 
-    public ScheduledSeries(Integer leagueId, TeamInfo team1Id, TeamInfo team2Id, String password,
+    public ScheduledSeries(Integer leagueId, TeamInfo teamInfo1, TeamInfo teamInfo2, String password,
             LocalDateTime scheduledTime) {
         this.leagueId = leagueId;
         this.password = password;
         this.scheduledTime = scheduledTime;
         this.state = DotaGlobalConstant.LOBBY_SERIES_SCHEDULED;
         this.matches = new ArrayList<>();
+        this.teamInfo1 = teamInfo1;
+        this.teamInfo2 = teamInfo2;
     }
 
     public LocalDateTime getScheduledTime() {
@@ -91,6 +106,14 @@ public class ScheduledSeries {
         this.seriesId = seriesId;
     }
 
+    public String getSeriesName() {
+        return seriesName;
+    }
+
+    public void setSeriesName(String seriesName) {
+        this.seriesName = seriesName;
+    }
+
     public Integer getNodeId() {
         return nodeId;
     }
@@ -99,12 +122,44 @@ public class ScheduledSeries {
         this.nodeId = nodeId;
     }
 
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(String nodeName) {
+        this.nodeName = nodeName;
+    }
+
+    public boolean isNodeFound() {
+        return nodeFound;
+    }
+
+    public void setNodeFound(boolean nodeFound) {
+        this.nodeFound = nodeFound;
+    }
+
     public Integer getLeagueId() {
         return leagueId;
     }
 
     public void setLeagueId(Integer leagueId) {
         this.leagueId = leagueId;
+    }
+
+    public String getLeagueName() {
+        return leagueName;
+    }
+
+    public void setLeagueName(String leagueName) {
+        this.leagueName = leagueName;
+    }
+
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(boolean admin) {
+        this.admin = admin;
     }
 
     public Integer getState() {
@@ -123,11 +178,21 @@ public class ScheduledSeries {
         this.matches = matches;
     }
 
+    public CMsgPracticeLobbySetDetails.Builder getDetail() {
+        return detail;
+    }
+
+    public void setDetail(CMsgPracticeLobbySetDetails.Builder detail) {
+        this.detail = detail;
+    }
+
     @Override
     public String toString() {
         return "ScheduledSeries [scheduledTime=" + scheduledTime + ", password=" + password + ", teamInfo1=" + teamInfo1
-                + ", teamInfo2=" + teamInfo2 + ", seriesType=" + seriesType + ", seriesId=" + seriesId + ", nodeId="
-                + nodeId + ", leagueId=" + leagueId + ", state=" + state + ", matches=" + matches + "]";
+                + ", teamInfo2=" + teamInfo2 + ", seriesType=" + seriesType + ", seriesId=" + seriesId + ", seriesName="
+                + seriesName + ", nodeId=" + nodeId + ", nodeName=" + nodeName + ", nodeFound=" + nodeFound
+                + ", leagueId=" + leagueId + ", leagueName=" + leagueName + ", admin=" + admin + ", state=" + state
+                + ", matches=" + matches + ", detail=" + detail + "]";
     }
 
 }

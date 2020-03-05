@@ -29,4 +29,5 @@ public class SingleObjectUpdatedParty extends CallbackMsg {
     public void setData(ByteString data) {
         this.data = data;
     }
+
 }

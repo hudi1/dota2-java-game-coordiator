@@ -16,7 +16,7 @@ public class RestAuthenticationProvider extends DaoAuthenticationProvider {
         try {
             return super.authenticate(authentication);
         } catch (BadCredentialsException e) {
-            logger.error("Uživatel zadal špatné přihlasovací údaje");
+            logger.error("Bad user or password");
             throw e;
         }
     }
