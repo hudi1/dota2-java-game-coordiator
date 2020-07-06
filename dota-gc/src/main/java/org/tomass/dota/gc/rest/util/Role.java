@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.rest;
+package org.tomass.dota.gc.rest.util;
 
 public class Role {
 

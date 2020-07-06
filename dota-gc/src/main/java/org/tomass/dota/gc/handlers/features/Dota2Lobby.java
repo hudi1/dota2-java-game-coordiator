@@ -46,6 +46,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetTeamSlot;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby.CExtraMsg;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobbyInvite;
 import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTABotDifficulty;
@@ -162,7 +163,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             logger.trace(">>handleLobbyInvite: " + lobbyInvite);
             client.postCallback(new LobbyInviteCallback(lobbyInvite));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleLobbyInvite: ", e);
         }
     }
 
@@ -172,7 +173,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             logger.trace(">>handleLobbyInviteRemoved: " + lobbyInvite);
             client.postCallback(new LobbyInviteRemovedCallback(lobbyInvite));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleLobbyInviteRemoved: ", e);
         }
     }
 
@@ -183,7 +184,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             this.lobby = lobby;
             client.postCallback(CSOTypes.LOBBY_VALUE, new LobbyNewCallback(lobby));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleLobbyNew: ", e);
         }
     }
 
@@ -193,8 +194,11 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             logger.trace(">>handleLobbyUpdated: " + lobby);
             this.lobby = lobby;
             client.postCallback(new LobbyUpdatedCallback(lobby));
+            for (CExtraMsg extraMessage : lobby.getExtraMessagesList()) {
+                client.processGcMessage(extraMessage.getId(), extraMessage.getContents());
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleLobbyUpdated: ", e);
         }
     }
 
@@ -205,7 +209,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
             this.lobby = null;
             client.postCallback(new LobbyRemovedCallback(lobby));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleLobbyRemoved: ", e);
         }
     }
 
@@ -226,7 +230,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         protobuf.getBody().setLobbyDetails(detail);
 
         logger.trace(">>createPracticeLobby: " + protobuf.getBody());
-        return sendJobAndWait(protobuf);
+        return sendJobAndWait(protobuf, 60l);
     }
 
     public void configPracticeLobby(CMsgPracticeLobbySetDetails options) {
@@ -285,10 +289,10 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     }
 
     public void inviteToLobby(Integer accountId) {
-        inviteToLobby(new SteamID(accountId, EUniverse.Public, EAccountType.Individual).convertToUInt64());
+        inviteToLobbyLong(new SteamID(accountId, EUniverse.Public, EAccountType.Individual).convertToUInt64());
     }
 
-    public void inviteToLobby(long steamId) {
+    public void inviteToLobbyLong(long steamId) {
         if (lobby == null) {
             return;
         }

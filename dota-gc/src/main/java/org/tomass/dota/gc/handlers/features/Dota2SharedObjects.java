@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
+import org.tomass.dota.gc.handlers.callbacks.PopupCallback;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedLobby;
@@ -15,6 +16,8 @@ import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectRemovedParty;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedLobby;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectUpdatedParty;
 import org.tomass.dota.gc.util.CSOTypes;
+import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAPopup;
+import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgClientWelcome;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed;
 import org.tomass.protobuf.dota.GcsdkGcmessages.CMsgSOCacheSubscribed.SubscribedType;
@@ -54,6 +57,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
         dispatchMap.put(ESOMsg.k_ESOMsg_CacheSubscribed_VALUE, packetMsg -> handleSubscribed(packetMsg));
         dispatchMap.put(ESOMsg.k_ESOMsg_CacheUnsubscribed_VALUE, packetMsg -> handleUnsubscibed(packetMsg));
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientWelcome_VALUE, packetMsg -> handleClientWelcome(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCPopup_VALUE, packetMsg -> handlePopup(packetMsg));
     }
 
     private void handleCreate(IPacketGCMsg packetMsg) {
@@ -152,6 +156,12 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
             client.postCallback(new SingleObjectUpdatedParty(typeId, data));
             break;
         }
+    }
+
+    private void handlePopup(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgDOTAPopup.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgDOTAPopup.class, data);
+        logger.trace(">>handlePopup: " + protobuf.getBody() + "/" + data.getTargetJobID());
+        client.postCallback(new PopupCallback(data.getTargetJobID(), protobuf.getBody()));
     }
 
     @Override

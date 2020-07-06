@@ -3,7 +3,8 @@ package org.tomass.dota.gc.clients;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.tomass.dota.gc.config.AppConfig;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.tomass.dota.dao.TeamDao;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
@@ -76,8 +77,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     protected Dota2SharedObjects sharedObjectsHandler;
 
-    public Dota2Client(SteamClientConfig config, AppConfig appConfig) {
-        super(config, appConfig);
+    public Dota2Client(SteamClientConfig config) {
+        super(config);
         dispatchMap = new HashMap<>();
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientWelcome_VALUE, packetMsg -> handleWelcome(packetMsg));
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientConnectionStatus_VALUE, packetMsg -> handleStatus(packetMsg));
@@ -111,7 +112,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
             }
             setConnectionStatus(GCConnectionStatus.GCConnectionStatus_HAVE_SESSION);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!welcome: ", e);
         }
     }
 
@@ -149,10 +150,11 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
             ready = false;
             postCallback(new NotReadyCallback());
         }
+
         logger.info(ready ? "ready" : "not ready");
     }
 
-    private void processGcMessage(int id, ByteString contents) {
+    public void processGcMessage(int id, ByteString contents) {
         IPacketGCMsg packetGCMsg = getPacketGCMsg(id, contents.toByteArray());
         handleGCMsg(packetGCMsg);
     }
@@ -177,7 +179,6 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
             welcomeFunc.start();
         } catch (Exception e) {
             logger.error("!!launch: ", e);
-            e.printStackTrace();
         }
     }
 

@@ -7,24 +7,15 @@ import in.dragonbra.javasteam.types.JobID;
 
 public class MatchDetailsCallback extends CallbackMsg {
 
-    private Integer result;
+    private Builder builder;
 
-    public MatchDetailsCallback(JobID jobID, Builder body) {
+    public MatchDetailsCallback(JobID jobID, Builder builder) {
         setJobID(jobID);
-        this.setResult(body.getResult());
+        this.builder = builder;
     }
 
-    public Integer getResult() {
-        return result;
-    }
-
-    public void setResult(Integer result) {
-        this.result = result;
-    }
-
-    @Override
-    public String toString() {
-        return "MatchDetailsCallback [result=" + result + "]";
+    public Builder getBuilder() {
+        return builder;
     }
 
 }

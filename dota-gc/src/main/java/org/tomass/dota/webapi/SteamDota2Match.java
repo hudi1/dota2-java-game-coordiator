@@ -3,6 +3,8 @@ package org.tomass.dota.webapi;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tomass.dota.webapi.model.League;
 import org.tomass.dota.webapi.model.Match;
 import org.tomass.dota.webapi.model.RealtimeStats;
@@ -14,6 +16,8 @@ import in.dragonbra.javasteam.steam.webapi.WebAPI;
 import in.dragonbra.javasteam.types.KeyValue;
 
 public class SteamDota2Match {
+
+    public static final Logger logger = LoggerFactory.getLogger(SteamDota2Match.class);
 
     public static TeamInfo getTeam(SteamConfiguration configuration, Integer teamId) {
         if (teamId == null || configuration == null) {
@@ -31,7 +35,7 @@ public class SteamDota2Match {
                 teamInfo.setId(teamId);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!getTeam ", e);
         }
         return teamInfo;
     }
@@ -44,7 +48,7 @@ public class SteamDota2Match {
             KeyValue response = api.call("GetRealtimeStats", params);
             return RealtimeStats.parseFrom(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!getRealTimeStat ", e);
         }
         return null;
     }
@@ -97,7 +101,7 @@ public class SteamDota2Match {
             }
             return league;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!getLeagueMatchHistory ", e);
         }
         return null;
     }

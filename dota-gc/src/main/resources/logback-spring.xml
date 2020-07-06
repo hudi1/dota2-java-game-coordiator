@@ -12,6 +12,11 @@
         <appender-ref ref="STDOUT" />
     </logger>
 
+    <logger name="org.sqlproc" additivity="false">
+        <level value="debug" />
+        <appender-ref ref="STDOUT" />
+    </logger>
+
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>

@@ -1,0 +1,242 @@
+
+INSERT_PLAYER(CRUD,in=Player,out=Player,tab=player)=
+  insert into %%player (%NAME, %ACCOUNT_ID)
+  {= values (:id(idsel), :name, :accountId) }
+;
+
+GET_PLAYER(CRUD,in=Player,out=Player,tab=player=p,tab=team_player=t,tab=team=t1)=
+  select %p.ID @id(id), %p.NAME @name, %p.ACCOUNT_ID @accountId
+         {? :teams(call=toInit) | , %t1.ID @teams.id(id), %t1.NAME @teams.name, %t1.TEAM_ID @teams.teamId }
+  from %%player p
+  {? :teams(call=toInit) | left join %%team_player t on %p.ID = %t.PLAYER_ID left join %%team t1 on %t.TEAM_ID = %t1.ID }
+  {= where
+    {& %p.ID ::= :id }
+    {& %p.NAME ::= :name }
+    {& %p.ACCOUNT_ID ::= :accountId }
+  }
+;
+
+UPDATE_PLAYER(CRUD,in=Player,out=Player,tab=player)=
+  update %%player
+  {= set
+    { ,%NAME = :name(call=isDef) }
+    { ,%ACCOUNT_ID = :accountId(call=isDef) }
+  }
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+DELETE_PLAYER(CRUD,in=Player,out=Player,tab=player)=
+  delete from %%player
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+SELECT_PLAYER(QRY,in=Player,out=Player,tab=player=p,tab=team_player=t,tab=team=t1)=
+  select %p.ID @id(id), %p.NAME @name, %p.ACCOUNT_ID @accountId
+         {? :teams(call=toInit) | , %t1.ID @teams.id(id), %t1.NAME @teams.name, %t1.TEAM_ID @teams.teamId }
+  from %%player p
+  {? :teams(call=toInit) | left join %%team_player t on %p.ID = %t.PLAYER_ID left join %%team t1 on %t.TEAM_ID = %t1.ID }
+  {= where
+    {& %p.ID ::= :id }
+    {& UPPER(%p.NAME) like :+name }
+    {& %p.ACCOUNT_ID ::= :accountId }
+  }
+  {#ID order by %p.ID }
+;
+
+INSERT_SERIE(CRUD,in=Serie,out=Serie,tab=serie)=
+  insert into %%serie (%LEAGUE_ID, %PASSWORD, %TEAM_1_ID, %TEAM_1_WINS, %TEAM_2_ID, %TEAM_2_WINS, %STATE, %SCHEDULED_TIME, %BEST_OF, %LEAGUE_NAME, %NAME, %NODE_NAME, %NODE_ID, %SERIES_ID, %ACTUAL_LOBBY_ID, %ACTUAL_MATCH_ID, %DETAIL)
+  {= values (:id(idsel), :leagueId, :password, :team1.id, :team1Wins, :team2.id, :team2Wins, :state, :scheduledTime(type=localdatetime), :bestOf, :leagueName, :name, :nodeName, :nodeId, :seriesId, :actualLobbyId, :actualMatchId, :detail) }
+;
+
+GET_SERIE(CRUD,in=Serie,out=Serie,tab=serie=s,tab=team=t,tab=team=t1)=
+  select %s.ID @id(id), %s.LEAGUE_ID @leagueId, %s.PASSWORD @password, %s.TEAM_1_ID @team1.id(id), %s.TEAM_1_WINS @team1Wins, %s.TEAM_2_ID @team2.id(id), %s.TEAM_2_WINS @team2Wins, %s.STATE @state, %s.SCHEDULED_TIME @scheduledTime(type=localdatetime), %s.BEST_OF @bestOf, %s.LEAGUE_NAME @leagueName, %s.NAME @name, %s.NODE_NAME @nodeName, %s.NODE_ID @nodeId, %s.SERIES_ID @seriesId, %s.ACTUAL_LOBBY_ID @actualLobbyId, %s.ACTUAL_MATCH_ID @actualMatchId, %s.DETAIL @detail
+         {? :team1(call=toInit) | , %t.NAME @team1.name, %t.TEAM_ID @team1.teamId }
+         {? :team2(call=toInit) | , %t1.NAME @team2.name, %t1.TEAM_ID @team2.teamId }
+  from %%serie s
+  {? :team1(call=toInit) | left join %%team t on %s.TEAM_1_ID = %t.ID }
+  {? :team2(call=toInit) | left join %%team t1 on %s.TEAM_2_ID = %t1.ID }
+  {= where
+    {& %s.ID ::= :id }
+    {& %s.LEAGUE_ID ::= :leagueId }
+    {& %s.PASSWORD ::= :password }
+    {& %s.TEAM_1_ID ::= :team1.id }
+    {& %s.TEAM_1_WINS ::= :team1Wins }
+    {& %s.TEAM_2_ID ::= :team2.id }
+    {& %s.TEAM_2_WINS ::= :team2Wins }
+    {& %s.STATE ::= :state }
+    {& %s.SCHEDULED_TIME ::= :scheduledTime(type=localdatetime) }
+    {& %s.BEST_OF ::= :bestOf }
+    {& %s.LEAGUE_NAME ::= :leagueName }
+    {& %s.NAME ::= :name }
+    {& %s.NODE_NAME ::= :nodeName }
+    {& %s.NODE_ID ::= :nodeId }
+    {& %s.SERIES_ID ::= :seriesId }
+    {& %s.ACTUAL_LOBBY_ID ::= :actualLobbyId }
+    {& %s.ACTUAL_MATCH_ID ::= :actualMatchId }
+    {& %s.DETAIL ::= :detail }
+  }
+;
+
+UPDATE_SERIE(CRUD,in=Serie,out=Serie,tab=serie)=
+  update %%serie
+  {= set
+    { ,%LEAGUE_ID = :leagueId(call=isDef) }
+    { ,%PASSWORD = :password(call=isDef) }
+    { ,%TEAM_1_ID = :team1.id(call=isDef) }
+    { ,%TEAM_1_WINS = :team1Wins(call=isDef) }
+    { ,%TEAM_2_ID = :team2.id(call=isDef) }
+    { ,%TEAM_2_WINS = :team2Wins(call=isDef) }
+    { ,%STATE = :state(call=isDef) }
+    { ,%SCHEDULED_TIME = :scheduledTime(type=localdatetime,call=isDef) }
+    { ,%BEST_OF = :bestOf(call=isDef) }
+    { ,%LEAGUE_NAME = :leagueName(call=isDef) }
+    { ,%NAME = :name(call=isDef) }
+    { ,%NODE_NAME = :nodeName(call=isDef) }
+    { ,%NODE_ID = :nodeId(call=isDef) }
+    { ,%SERIES_ID = :seriesId(call=isDef) }
+    { ,%ACTUAL_LOBBY_ID = :actualLobbyId(call=isDef) }
+    { ,%ACTUAL_MATCH_ID = :actualMatchId(call=isDef) }
+    { ,%DETAIL = :detail(call=isDef) }
+  }
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+DELETE_SERIE(CRUD,in=Serie,out=Serie,tab=serie)=
+  delete from %%serie
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+SELECT_SERIE(QRY,in=Serie,out=Serie,tab=serie=s,tab=team=t,tab=team=t1)=
+  select %s.ID @id(id), %s.LEAGUE_ID @leagueId, %s.PASSWORD @password, %s.TEAM_1_ID @team1.id(id), %s.TEAM_1_WINS @team1Wins, %s.TEAM_2_ID @team2.id(id), %s.TEAM_2_WINS @team2Wins, %s.STATE @state, %s.SCHEDULED_TIME @scheduledTime(type=localdatetime), %s.BEST_OF @bestOf, %s.LEAGUE_NAME @leagueName, %s.NAME @name, %s.NODE_NAME @nodeName, %s.NODE_ID @nodeId, %s.SERIES_ID @seriesId, %s.ACTUAL_LOBBY_ID @actualLobbyId, %s.ACTUAL_MATCH_ID @actualMatchId, %s.DETAIL @detail
+         {? :team1(call=toInit) | , %t.NAME @team1.name, %t.TEAM_ID @team1.teamId }
+         {? :team2(call=toInit) | , %t1.NAME @team2.name, %t1.TEAM_ID @team2.teamId }
+  from %%serie s
+  {? :team1(call=toInit) | left join %%team t on %s.TEAM_1_ID = %t.ID }
+  {? :team2(call=toInit) | left join %%team t1 on %s.TEAM_2_ID = %t1.ID }
+  {= where
+    {& %s.ID ::= :id }
+    {& %s.LEAGUE_ID ::= :leagueId }
+    {& UPPER(%s.PASSWORD) like :+password }
+    {& %s.TEAM_1_ID ::= :team1.id }
+    {& %s.TEAM_1_WINS ::= :team1Wins }
+    {& %s.TEAM_2_ID ::= :team2.id }
+    {& %s.TEAM_2_WINS ::= :team2Wins }
+    {& %s.STATE ::= :state }
+    {& %s.SCHEDULED_TIME ::= :scheduledTime(type=localdatetime) }
+    {& %s.BEST_OF ::= :bestOf }
+    {& UPPER(%s.LEAGUE_NAME) like :+leagueName }
+    {& UPPER(%s.NAME) like :+name }
+    {& UPPER(%s.NODE_NAME) like :+nodeName }
+    {& %s.NODE_ID ::= :nodeId }
+    {& %s.SERIES_ID ::= :seriesId }
+    {& %s.ACTUAL_LOBBY_ID ::= :actualLobbyId }
+    {& %s.ACTUAL_MATCH_ID ::= :actualMatchId }
+    {& %s.DETAIL ::= :detail }
+  }
+  {#ID order by %s.ID }
+  {#TEAM1 order by %s.TEAM_1_ID }
+  {#TEAM2 order by %s.TEAM_2_ID }
+;
+
+INSERT_TEAM(CRUD,in=Team,out=Team,tab=team)=
+  insert into %%team (%NAME, %TEAM_ID)
+  {= values (:id(idsel), :name, :teamId) }
+;
+
+GET_TEAM(CRUD,in=Team,out=Team,tab=team=t,tab=team_player=t1,tab=player=p)=
+  select %t.ID @id(id), %t.NAME @name, %t.TEAM_ID @teamId
+         {? :players(call=toInit) | , %p.ID @players.id(id), %p.NAME @players.name, %p.ACCOUNT_ID @players.accountId }
+  from %%team t
+  {? :players(call=toInit) | left join %%team_player t1 on %t.ID = %t1.TEAM_ID left join %%player p on %t1.PLAYER_ID = %p.ID }
+  {= where
+    {& %t.ID ::= :id }
+    {& %t.NAME ::= :name }
+    {& %t.TEAM_ID ::= :teamId }
+  }
+;
+
+UPDATE_TEAM(CRUD,in=Team,out=Team,tab=team)=
+  update %%team
+  {= set
+    { ,%NAME = :name(call=isDef) }
+    { ,%TEAM_ID = :teamId(call=isDef) }
+  }
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+DELETE_TEAM(CRUD,in=Team,out=Team,tab=team)=
+  delete from %%team
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+SELECT_TEAM(QRY,in=Team,out=Team,tab=team=t,tab=team_player=t1,tab=player=p)=
+  select %t.ID @id(id), %t.NAME @name, %t.TEAM_ID @teamId
+         {? :players(call=toInit) | , %p.ID @players.id(id), %p.NAME @players.name, %p.ACCOUNT_ID @players.accountId }
+  from %%team t
+  {? :players(call=toInit) | left join %%team_player t1 on %t.ID = %t1.TEAM_ID left join %%player p on %t1.PLAYER_ID = %p.ID }
+  {= where
+    {& %t.ID ::= :id }
+    {& UPPER(%t.NAME) like :+name }
+    {& %t.TEAM_ID ::= :teamId }
+  }
+  {#ID order by %t.ID }
+  {#TEAM_ID order by %t.TEAM_ID }
+;
+
+INSERT_TEAM_PLAYER(CRUD,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  insert into %%team_player (%TEAM_ID, %PLAYER_ID)
+  {= values (:id(idsel), :teamId, :playerId) }
+;
+
+GET_TEAM_PLAYER(CRUD,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  select %ID @id(id), %TEAM_ID @teamId, %PLAYER_ID @playerId
+  from %%team_player
+  {= where
+    {& %ID ::= :id }
+    {& %TEAM_ID ::= :teamId }
+    {& %PLAYER_ID ::= :playerId }
+  }
+;
+
+UPDATE_TEAM_PLAYER(CRUD,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  update %%team_player
+  {= set
+    { ,%TEAM_ID = :teamId(call=isDef) }
+    { ,%PLAYER_ID = :playerId(call=isDef) }
+  }
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+DELETE_TEAM_PLAYER(CRUD,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  delete from %%team_player
+  {= where
+    {& %ID = :id(!empty) }
+  }
+;
+
+SELECT_TEAM_PLAYER(QRY,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  select %ID @id(id), %TEAM_ID @teamId, %PLAYER_ID @playerId
+  from %%team_player
+  {= where
+    {& %ID ::= :id }
+    {& %TEAM_ID ::= :teamId }
+    {& %PLAYER_ID ::= :playerId }
+  }
+  {#ID order by %ID }
+  {#TEAM_ID order by %TEAM_ID }
+  {#PLAYER_ID order by %PLAYER_ID }
+;

@@ -110,7 +110,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             logger.trace(">>handlePartyInvite: " + partyInvite);
             client.postCallback(new PartyInviteCallback(partyInvite));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handlePartyInvite: ", e);
         }
     }
 
@@ -121,7 +121,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             this.party = party;
             client.postCallback(new PartyNewCallback(party));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handlePartyNew: ", e);
         }
     }
 
@@ -132,7 +132,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             this.party = party;
             client.postCallback(new PartyUpdatedCallback(party));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handlePartyUpdated: ", e);
         }
     }
 
@@ -143,7 +143,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             this.party = null;
             client.postCallback(new PartyRemovedCallback(party));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handlePartyRemoved: ", e);
         }
     }
 

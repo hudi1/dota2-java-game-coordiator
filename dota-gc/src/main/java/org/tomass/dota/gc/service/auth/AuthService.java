@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.service;
+package org.tomass.dota.gc.service.auth;
 
 import java.util.Arrays;
 import java.util.List;

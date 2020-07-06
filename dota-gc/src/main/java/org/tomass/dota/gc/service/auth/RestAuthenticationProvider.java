@@ -1,4 +1,4 @@
-package org.tomass.dota.gc.service;
+package org.tomass.dota.gc.service.auth;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

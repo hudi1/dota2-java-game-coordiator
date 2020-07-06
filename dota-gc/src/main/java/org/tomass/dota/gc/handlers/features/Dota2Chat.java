@@ -27,6 +27,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientChat.CMsgDOTALeaveChatChanne
 import org.tomass.protobuf.dota.DotaGcmessagesClientChat.CMsgDOTAOtherJoinedChatChannel;
 import org.tomass.protobuf.dota.DotaGcmessagesClientChat.CMsgDOTAOtherLeftChatChannel;
 import org.tomass.protobuf.dota.DotaGcmessagesClientChat.CMsgDOTARequestChatChannelList;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
 import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTAChatChannelType_t;
 
@@ -89,6 +90,8 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
                 channelsByName.put(key, channel);
             }
             client.postCallback(new ChatJoinedChannelCallback(channel));
+        } else {
+            logger.warn("handleJoinResponse: " + protobuf.getBody());
         }
     }
 
@@ -174,6 +177,10 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
             joinChannel("Lobby_" + client.getLobbyHandler().getLobby().getLobbyId(),
                     DOTAChatChannelType_t.DOTAChannelType_Lobby);
         }
+    }
+
+    public void joinLobbyChannel(CSODOTALobby lobby) {
+        joinChannel("Lobby_" + lobby.getLobbyId(), DOTAChatChannelType_t.DOTAChannelType_Lobby);
     }
 
     public void joinPartyChannel() {

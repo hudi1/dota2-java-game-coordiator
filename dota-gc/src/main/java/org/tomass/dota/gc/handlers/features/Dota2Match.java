@@ -10,6 +10,7 @@ import org.tomass.dota.gc.handlers.callbacks.match.DatagramTicketCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchDetailsCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchHistoryCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchMakingStatsCallback;
+import org.tomass.dota.gc.handlers.callbacks.match.MatchSignedOutCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.MatchesMinimalCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.RequestMatchesCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback;
@@ -20,6 +21,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAMatchmakingStatsRes
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTARequestMatchesResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgGCMatchDetailsRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgGCMatchDetailsResponse;
+import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgGCToClientMatchSignedOut;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgClientToGCRequestSteamDatagramTicketResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientWatch.CMsgClientToGCFindTopSourceTVGames;
 import org.tomass.protobuf.dota.DotaGcmessagesClientWatch.CMsgClientToGCTopFriendMatchesRequest;
@@ -58,6 +60,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCMatchmakingStatsResponse_VALUE,
                 packetMsg -> handleMatchMakingStats(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCMatchDetailsResponse_VALUE, packetMsg -> handleMatchDetails(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCToClientMatchSignedOut_VALUE, packetMsg -> handleMatchSignedOut(packetMsg));
     }
 
     private void handleMmstats(IPacketGCMsg msg) {
@@ -133,6 +136,13 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         client.postCallback(new MatchDetailsCallback(protobuf.getTargetJobID(), protobuf.getBody()));
     }
 
+    private void handleMatchSignedOut(IPacketGCMsg msg) {
+        ClientGCMsgProtobuf<CMsgGCToClientMatchSignedOut.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgGCToClientMatchSignedOut.class, msg);
+        logger.trace(">>handleMatchSignedOut: " + protobuf.getBody());
+        client.postCallback(new MatchSignedOutCallback(protobuf.getBody()));
+    }
+
     // actions
 
     public TopSourceTvGamesCallback requestTopSourceTvGames(long lobbyId) {
@@ -171,8 +181,8 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     public MatchDetailsCallback requestMatchDetails(Long matchId) {
         ClientGCMsgProtobuf<CMsgGCMatchDetailsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCMatchDetailsRequest.class, EDOTAGCMsg.k_EMsgGCMatchDetailsRequest_VALUE);
-        logger.trace(">>requestMatchDetails: " + protobuf.getBody());
         protobuf.getBody().setMatchId(matchId);
+        logger.trace(">>requestMatchDetails: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 

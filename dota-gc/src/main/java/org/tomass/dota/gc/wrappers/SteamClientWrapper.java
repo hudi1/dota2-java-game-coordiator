@@ -13,16 +13,20 @@ import org.springframework.stereotype.Component;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.clients.impl.DotaClientImpl;
 import org.tomass.dota.gc.config.AppConfig;
-import org.tomass.dota.gc.config.ScheduledSeries;
+import org.tomass.dota.gc.config.ClientConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueInfoAdmin;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
+import org.tomass.dota.model.Serie;
 
 @Component
 public class SteamClientWrapper {
 
     @Autowired
     private AppConfig config;
+
+    @Autowired
+    private ClientConfig clientConfig;
 
     private Queue<DotaClientImpl> clients = new LinkedList<>();
 
@@ -34,7 +38,7 @@ public class SteamClientWrapper {
     @PostConstruct
     public void init() {
         for (Map.Entry<String, SteamClientConfig> entry : config.getClients().entrySet()) {
-            DotaClientImpl klient = new DotaClientImpl(entry.getValue(), config);
+            DotaClientImpl klient = clientConfig.client(entry.getValue());
             if (klient.getConfig().isConnectOnStart()) {
                 klient.connect();
             }
@@ -51,11 +55,22 @@ public class SteamClientWrapper {
         return null;
     }
 
-    public LobbyNewCallback requestNewTeamLobby(ScheduledSeries serie) {
+    public LobbyNewCallback requestSeriesLobby(Serie serie) {
         synchronized (clientLock) {
             for (DotaClientImpl client : clients) {
                 if (client.getLobbyHandler().getLobby() == null) {
-                    return client.requestNewScheduledTeamLobby(serie);
+                    return client.requestSeriesLobby(serie);
+                }
+            }
+        }
+        return null;
+    }
+
+    public LobbyNewCallback requestLobby(Serie lobby) {
+        synchronized (clientLock) {
+            for (DotaClientImpl client : clients) {
+                if (client.getLobbyHandler().getLobby() == null) {
+                    return client.requestLobby(lobby);
                 }
             }
         }

@@ -1,0 +1,6 @@
+DELETE_TEAM_PLAYER_BY_TEAM(CRUD,in=TeamPlayer,out=TeamPlayer,tab=team_player)=
+  delete from %%team_player
+  {= where
+    {& %TEAM_ID = :teamId(!empty) }
+  }
+;

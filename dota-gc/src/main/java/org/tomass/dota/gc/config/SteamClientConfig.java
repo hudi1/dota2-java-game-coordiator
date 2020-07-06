@@ -24,6 +24,8 @@ public class SteamClientConfig {
 
     private Integer lobbyCountMembers;
 
+    private String steamWebApi;
+
     public String getUser() {
         return user;
     }
@@ -118,6 +120,14 @@ public class SteamClientConfig {
                 + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
                 + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
                 + ", partyCountMembers=" + partyCountMembers + ", lobbyCountMembers=" + lobbyCountMembers + "]";
+    }
+
+    public String getSteamWebApi() {
+        return steamWebApi;
+    }
+
+    public void setSteamWebApi(String steamWebApi) {
+        this.steamWebApi = steamWebApi;
     }
 
 }

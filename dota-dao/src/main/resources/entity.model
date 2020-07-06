@@ -1,0 +1,106 @@
+package org.tomass.dota.model {
+
+
+    #Operators
+    #Serializable(1)
+    #Equals(id)
+    #HashCode(id)
+    #ToString(id,name,accountId)
+    #Pojo Player {
+        #PrimaryKey
+        #Index
+        #Attr Integer id // INT(10)
+        #IsDef
+        #Attr String name // VARCHAR(255)
+        #IsDef
+        #Attr Integer accountId // INT(10)
+        #ToInit
+        #Attr java.util.List <Team> teams // null
+    }
+
+    #Operators
+    #Serializable(1)
+    #Equals(id)
+    #HashCode(id)
+    #ToString(id,leagueId,password,team1Wins,team2Wins,state,scheduledTime,bestOf,leagueName,name,nodeName,nodeId,seriesId,actualLobbyId,actualMatchId,detail)
+    #Pojo Serie {
+        #PrimaryKey
+        #Index
+        #Attr Integer id // INT(10)
+        #Required
+        #Attr Integer leagueId // INT(10)
+        #Required
+        #Attr String password // VARCHAR(255)
+        #ToInit
+        #Required
+        #Index
+        #IsPojo
+        #Attr Team team1 // INT(10)
+        #Required
+        #Attr Integer team1Wins // INT(10)
+        #ToInit
+        #Required
+        #Index
+        #IsPojo
+        #Attr Team team2 // INT(10)
+        #Required
+        #Attr Integer team2Wins // INT(10)
+        #Required
+        #Attr Integer state // INT(10)
+        #Required
+        #Attr java.time.LocalDateTime scheduledTime // TIMESTAMP(19)
+        #Required
+        #Attr Integer bestOf // INT(10)
+        #IsDef
+        #Attr String leagueName // VARCHAR(255)
+        #IsDef
+        #Attr String name // VARCHAR(255)
+        #IsDef
+        #Attr String nodeName // VARCHAR(255)
+        #IsDef
+        #Attr Integer nodeId // INT(10)
+        #IsDef
+        #Attr Integer seriesId // INT(10)
+        #IsDef
+        #Attr Long actualLobbyId // BIGINT(19)
+        #IsDef
+        #Attr Long actualMatchId // BIGINT(19)
+        #IsDef
+        #Attr byte[] detail // BLOB(65535)
+    }
+
+    #Operators
+    #Serializable(1)
+    #Equals(id)
+    #HashCode(id)
+    #ToString(id,name,teamId)
+    #Pojo Team {
+        #PrimaryKey
+        #Index
+        #Attr Integer id // INT(10)
+        #IsDef
+        #Attr String name // VARCHAR(255)
+        #IsDef
+        #Index
+        #Attr Integer teamId // INT(10)
+        #ToInit
+        #Attr java.util.List <Player> players // null
+    }
+
+    #Operators
+    #Serializable(1)
+    #Equals(id)
+    #HashCode(id)
+    #ToString(id,teamId,playerId)
+    #Pojo TeamPlayer {
+        #PrimaryKey
+        #Index
+        #Attr Integer id // INT(10)
+        #IsDef
+        #Index
+        #Attr Integer teamId // INT(10)
+        #IsDef
+        #Index
+        #Attr Integer playerId // INT(10)
+    }
+}

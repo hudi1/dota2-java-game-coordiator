@@ -1,4 +1,5 @@
-FROM arm32v7/openjdk
+#FROM arm32v7/openjdk
+FROM openjdk:11-jdk-slim
 
 ADD @project.build.finalName@.war /usr/local/
 

@@ -1,0 +1,50 @@
+resolve-pojo-on;
+database-is-online;
+validate-resources - "statements.meta" entity.model dao.model;
+database-jdbc-driver   com.mysql.jdbc.Driver;
+database-has-url   "jdbc:mysql://localhost/dotabot?serverTimezone=UTC";
+database-login-username   root;
+database-login-password   root;
+database-active-schema dotabot;
+
+pojogen-generate-wrappers;
+pojogen-generate-methods toString equals hashCode isDef toInit;
+pojogen-implements-interfaces java.io.Serializable;
+pojogen-generate-operators;
+
+metagen-global-identity;
+
+pojogen-generate-wrappers;
+
+//pojogen-make-it-final;
+pojogen-generate-operators;
+
+pojogen-types-sqltypes TIMESTAMP(19)->java.time.LocalDateTime DATE(10)->java.time.LocalDate;
+metagen-sqltype-meta-type "TIMESTAMP(19)"->localdatetime "DATE(10)"->localdate;
+
+pojogen-implements-interfaces java.io.Serializable;
+pojogen-generate-methods equals toString toInit isDef;
+
+pojogen-package org.tomass.dota.model;
+daogen-package org.tomass.dota.dao;
+
+// many-to-many
+pojogen-table-many-to-many team_player ID->player->PLAYERS;
+pojogen-table-many-to-many team_player ID->team->TEAMS;
+
+pojogen-ignore-one-to-many team ID->serie;
+pojogen-ignore-one-to-many team ID->serie;
+
+is-table player player;
+is-table serie serie;
+is-table team team;
+is-table team_player team_player;
+
+is-pojo Player org.tomass.dota.model.Player;
+is-pojo Serie org.tomass.dota.model.Serie;
+is-pojo Team org.tomass.dota.model.Team;
+is-pojo TeamPlayer org.tomass.dota.model.TeamPlayer;
+
+database-debug-level TRACE;
+pojogen-debug-level TRACE;
+metagen-debug-level TRACE;

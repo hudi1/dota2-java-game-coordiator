@@ -73,7 +73,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
                 dispatcher.accept(packetMsg);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!handleMsg: ", e);
         }
     }
 

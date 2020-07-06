@@ -17,20 +17,17 @@ public class AppConfig {
     private Map<String, String> usersPass = new ConcurrentHashMap<>();
     private Map<String, String> usersRole = new ConcurrentHashMap<>();
 
-    private List<ScheduledSeries> series;
     private Map<String, SteamClientConfig> clients;
     private Map<String, String> chatCommands;
     private Map<Integer, String> heroes;
     private Map<Integer, String> notableplayers;
     private List<Long> steamIdAdmins;
-    private String steamWebApi;
 
     public long refreshDuration;
 
     public AppConfig() {
         clients = new ConcurrentHashMap<String, SteamClientConfig>();
         setChatCommands(new ConcurrentHashMap<String, String>());
-        setSeries(new ArrayList<>());
         steamIdAdmins = new ArrayList<>();
     }
 
@@ -106,14 +103,6 @@ public class AppConfig {
         this.refreshDuration = refreshDuration;
     }
 
-    public String getSteamWebApi() {
-        return steamWebApi;
-    }
-
-    public void setSteamWebApi(String steamWebApi) {
-        this.steamWebApi = steamWebApi;
-    }
-
     public Map<Integer, String> getHeroes() {
         return heroes;
     }
@@ -130,14 +119,6 @@ public class AppConfig {
         this.notableplayers = notableplayers;
     }
 
-    public List<ScheduledSeries> getSeries() {
-        return series;
-    }
-
-    public void setSeries(List<ScheduledSeries> series) {
-        this.series = series;
-    }
-
     public Map<String, String> getChatCommands() {
         return chatCommands;
     }
@@ -148,10 +129,9 @@ public class AppConfig {
 
     @Override
     public String toString() {
-        return "AppConfig [usersPass=" + usersPass + ", usersRole=" + usersRole + ", series=" + series + ", clients="
-                + clients + ", chatCommands=" + chatCommands + ", heroes=" + heroes + ", notableplayers="
-                + notableplayers + ", steamIdAdmins=" + steamIdAdmins + ", steamWebApi=" + steamWebApi
-                + ", refreshDuration=" + refreshDuration + "]";
+        return "AppConfig [usersPass=" + usersPass + ", usersRole=" + usersRole + ", clients=" + clients
+                + ", chatCommands=" + chatCommands + ", heroes=" + heroes + ", notableplayers=" + notableplayers
+                + ", steamIdAdmins=" + steamIdAdmins + ", refreshDuration=" + refreshDuration + "]";
     }
 
 }

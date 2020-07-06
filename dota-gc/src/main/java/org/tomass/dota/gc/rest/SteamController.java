@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.tomass.dota.gc.rest.util.Role;
 import org.tomass.dota.gc.wrappers.SteamClientWrapper;
 
 @RestController
@@ -139,6 +140,21 @@ public class SteamController extends BaseCommonController {
         log.debug(">>konfigurujClientGc '{}' '{}' '{}' '{}'", funkce, args, batch, oddelovace);
         String result = konfigurujBatch(funkce, bezKonverze, args, batch,
                 steamClient.getSteamClient(klient).getPlayerHandler(), oddelovace);
+        log.debug("<<konfigurujClientGc '{}'", result);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/steam/client/handler/league", method = RequestMethod.GET, produces = {
+            MediaType.APPLICATION_JSON_VALUE })
+    @Secured({ Role.CONFIG })
+    public ResponseEntity<String> konfigurujClientGcLeague(@RequestParam String funkce, @RequestParam String klient,
+            @RequestParam(required = false) boolean bezKonverze, @RequestParam(required = false) String args,
+            @RequestParam(required = false) Integer batch, @RequestParam(required = false) String oddelovace,
+            HttpServletRequest request) {
+
+        log.debug(">>konfigurujClientGc '{}' '{}' '{}' '{}'", funkce, args, batch, oddelovace);
+        String result = konfigurujBatch(funkce, bezKonverze, args, batch,
+                steamClient.getSteamClient(klient).getLeagueHandler(), oddelovace);
         log.debug("<<konfigurujClientGc '{}'", result);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }

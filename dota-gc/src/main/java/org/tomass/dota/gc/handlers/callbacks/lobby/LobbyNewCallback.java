@@ -16,4 +16,9 @@ public class LobbyNewCallback extends CallbackMsg {
         return lobby;
     }
 
+    @Override
+    public String toString() {
+        return "LobbyNewCallback [lobby=" + lobby + "]";
+    }
+
 }

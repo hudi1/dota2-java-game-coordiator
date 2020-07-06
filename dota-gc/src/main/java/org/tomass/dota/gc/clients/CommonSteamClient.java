@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
@@ -54,8 +55,6 @@ public class CommonSteamClient extends SteamClient {
 
     protected SteamClientConfig config;
 
-    protected AppConfig appConfig;
-
     protected SteamUser steamUser;
 
     protected SteamFriends steamFriends;
@@ -66,14 +65,20 @@ public class CommonSteamClient extends SteamClient {
 
     protected boolean logged;
 
+    protected EResult result;
+
+    protected EResult extendedResult;
+
     private CompletableFuture<Void> managerLoop;
 
     private Map<Object, CompletableFuture<Object>> subscribers = new HashMap<>();
 
-    public CommonSteamClient(SteamClientConfig config, AppConfig appConfig) {
-        super(SteamConfiguration.create(c -> c.withWebAPIKey(appConfig.getSteamWebApi())));
+    @Autowired
+    protected AppConfig appConfig;
+
+    public CommonSteamClient(SteamClientConfig config) {
+        super(SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi())));
         this.config = config;
-        this.appConfig = appConfig;
         init();
     }
 
@@ -106,7 +111,7 @@ public class CommonSteamClient extends SteamClient {
             try (Scanner s = new Scanner(loginKeyFile)) {
                 details.setLoginKey(s.nextLine());
             } catch (FileNotFoundException e) {
-                e.printStackTrace();
+                logger.error("!!onConnected: ", e);
             }
         } else {
             details.setPassword(config.getPass());
@@ -120,7 +125,7 @@ public class CommonSteamClient extends SteamClient {
             if (sentry.exists())
                 details.setSentryFileHash(calculateSHA1(sentry));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!!onConnected: ", e);
         }
 
         steamUser.logOn(details);
@@ -132,7 +137,6 @@ public class CommonSteamClient extends SteamClient {
             try {
                 Thread.sleep(5000L);
             } catch (InterruptedException e) {
-                e.printStackTrace();
             }
             connect();
         } else {
@@ -143,6 +147,8 @@ public class CommonSteamClient extends SteamClient {
     protected void onLoggedOn(LoggedOnCallback callback) {
         boolean isSteamGuard = callback.getResult() == EResult.AccountLogonDenied;
         boolean is2Fa = callback.getResult() == EResult.AccountLoginDeniedNeedTwoFactor;
+        result = callback.getResult();
+        extendedResult = callback.getExtendedResult();
 
         if (isSteamGuard || is2Fa) {
             logger.info("This account is SteamGuard protected.");
@@ -161,6 +167,8 @@ public class CommonSteamClient extends SteamClient {
 
     private void onLoggedOff(LoggedOffCallback callback) {
         logger.info("Logged off of Steam: " + callback.getResult());
+        result = callback.getResult();
+        extendedResult = null;
         logged = false;
     }
 
@@ -188,7 +196,7 @@ public class CommonSteamClient extends SteamClient {
 
             steamUser.sendMachineAuthResponse(details);
         } catch (IOException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            logger.error("!!onMachineAuth: ", e);
         }
     }
 
@@ -212,7 +220,7 @@ public class CommonSteamClient extends SteamClient {
             fw.write(callback.getLoginKey());
             steamUser.acceptNewLoginKey(callback);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("!!onLoginKey: ", e);
         }
     }
 
@@ -244,7 +252,6 @@ public class CommonSteamClient extends SteamClient {
                             manager.runWaitCallbacks(1000L);
                         } catch (Exception e) {
                             logger.error("!!managerLoop: ", e);
-                            e.printStackTrace();
                         }
                     }
                 }
@@ -302,18 +309,21 @@ public class CommonSteamClient extends SteamClient {
     @SuppressWarnings("unchecked")
     public <T> T registerAndWait(Object key, Long timeout) {
         logger.trace(">>registerAndWait: " + key);
+        T value = null;
         try {
             if (this.subscribers.get(key) != null) {
                 return (T) this.subscribers.get(key).get(timeout, TimeUnit.SECONDS);
             }
             CompletableFuture<Object> future = new CompletableFuture<>();
             subscribers.put(key, future);
-            return (T) future.get(timeout, TimeUnit.SECONDS);
+            value = (T) future.get(timeout, TimeUnit.SECONDS);
+            return value;
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("!! registerAndWait ", e);
             return null;
         } finally {
             subscribers.remove(key);
+            logger.trace("<<registerAndWait: " + value);
         }
     }
 
@@ -335,6 +345,22 @@ public class CommonSteamClient extends SteamClient {
 
     public void setAppConfig(AppConfig appConfig) {
         this.appConfig = appConfig;
+    }
+
+    public EResult getResult() {
+        return result;
+    }
+
+    public void setResult(EResult result) {
+        this.result = result;
+    }
+
+    public EResult getExtendedResult() {
+        return extendedResult;
+    }
+
+    public void setExtendedResult(EResult extendedResult) {
+        this.extendedResult = extendedResult;
     }
 
 }
