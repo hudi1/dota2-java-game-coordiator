@@ -3,8 +3,6 @@ package org.tomass.dota.gc.clients;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.tomass.dota.dao.TeamDao;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.ConnectionStatusCallback;
@@ -49,7 +47,7 @@ import in.dragonbra.javasteam.util.event.ScheduledFunction;
 
 public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler {
 
-    private boolean ready = false;
+    protected boolean ready = false;
 
     private GCConnectionStatus connectionStatus = GCConnectionStatus.GCConnectionStatus_NO_SESSION;
 

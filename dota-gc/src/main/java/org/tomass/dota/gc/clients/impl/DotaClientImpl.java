@@ -2,25 +2,26 @@ package org.tomass.dota.gc.clients.impl;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.apache.commons.collections4.map.HashedMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 import org.sqlproc.engine.impl.SqlStandardControl;
 import org.tomass.dota.dao.PlayerDao;
 import org.tomass.dota.dao.SerieDao;
 import org.tomass.dota.dao.TeamDao;
 import org.tomass.dota.dao.TeamPlayerDao;
 import org.tomass.dota.gc.clients.Dota2Client;
+import org.tomass.dota.gc.clients.model.LobbyReadyInfo;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatMessageCallback;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueAvailableLobbyNodes;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueInfoAdmin;
+import org.tomass.dota.gc.handlers.callbacks.league.LeagueNodeCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyNewCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyRemovedCallback;
@@ -34,6 +35,7 @@ import org.tomass.dota.gc.handlers.callbacks.party.PartyNewCallback;
 import org.tomass.dota.gc.util.CSOTypes;
 import org.tomass.dota.gc.util.DotaGlobalConstant;
 import org.tomass.dota.gc.util.LobbyDetailsFactory;
+import org.tomass.dota.model.DotaClientInfo;
 import org.tomass.dota.model.Player;
 import org.tomass.dota.model.Serie;
 import org.tomass.dota.model.Team;
@@ -47,6 +49,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailab
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodes.NodeInfo.Builder;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfo;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CDOTALobbyMember;
+import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CLobbyTeamDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby.State;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTAParty;
@@ -107,13 +110,9 @@ public class DotaClientImpl extends Dota2Client {
 
     private void onLobbyUpdated(LobbyUpdatedCallback callback) {
         stopScheduledLobby();
-        if (!callback.getLobby().getSeriesCurrentNonPriorityTeamChoice()
-                .equals(DOTASelectionPriorityChoice.k_DOTASelectionPriorityChoice_Invalid)
-                && !callback.getLobby().getSeriesCurrentPriorityTeamChoice()
-                        .equals(DOTASelectionPriorityChoice.k_DOTASelectionPriorityChoice_Invalid)) {
-            if (callback.getLobby().getState().equals(State.UI)) {
-                lobbyHandler.launchPracticeLobby();
-            }
+        LobbyReadyInfo info = getInfo(callback.getLobby());
+        if (info.isCoinTossReady()) {
+            lobbyHandler.launchPracticeLobby();
         }
         if (callback.getLobby().getState().equals(State.RUN)) {
             lobbyHandler.abandonCurrentGame();
@@ -124,9 +123,9 @@ public class DotaClientImpl extends Dota2Client {
                 serie.setActualMatchId(callback.getLobby().getMatchId());
                 serieDao.update(serie);
             }
-
         }
-        if (isReadyToTournamentLaunch(callback.getLobby())) {
+
+        if (info.isReady()) {
             getLobbyHandler().sendLobbyMessage("Lobby is ready to launch");
             launchScheduledLobby();
         }
@@ -144,8 +143,10 @@ public class DotaClientImpl extends Dota2Client {
 
         if (details != null && details.getBuilder().getResult() == EResult.OK.code()) {
             Serie serie = serieDao.get(new Serie().withActualMatchId(matchId));
-            if (serie != null) {
-                logger.trace("Series found");
+            LeagueNodeCallback leagueNode = getLeagueHandler().requestLeagueNode(serie.getLeagueId(),
+                    serie.getNodeId());
+
+            if (serie != null && (leagueNode == null || !leagueNode.getBody().hasNode())) {
                 int direTeamId = details.getBuilder().getMatch().getDireTeamId();
                 int radiantTeamId = details.getBuilder().getMatch().getRadiantTeamId();
                 EMatchOutcome outcome = details.getBuilder().getMatch().getMatchOutcome();
@@ -230,21 +231,25 @@ public class DotaClientImpl extends Dota2Client {
 
     private void onChatMessage(ChatMessageCallback callback) {
         logger.info("Accepting chat message: " + callback.getBuilder().getText());
-        if (callback.getChatChannel().getName().equals("Lobby_" + lobbyHandler.getLobby().getLobbyId())) {
+        if (callback.getChatChannel().getName().equals("Lobby_" + getLobbyHandler().getLobby().getLobbyId())) {
             if (callback.getBuilder().getText().equals("!launch")) {
-                if (lobbyHandler.getLobby() != null) {
-                    if (isReadyToTournamentLaunch(lobbyHandler.getLobby())) {
+                if (getLobbyHandler().getLobby() != null) {
+                    LobbyReadyInfo info = getInfo(lobbyHandler.getLobby());
+                    if (info.isReady()) {
                         launchScheduledLobby();
                     } else {
-                        lobbyHandler.sendLobbyMessage(getNotReadyText(lobbyHandler.getLobby()));
+                        for (String message : info.getMessages()) {
+                            getLobbyHandler().sendLobbyMessage(message);
+                        }
                     }
                 }
             } else if (callback.getBuilder().getText().equals("!forcelaunch")) {
-                lobbyHandler.launchPracticeLobby();
+                // TODO popup error
+                getLobbyHandler().launchPracticeLobby();
             } else if (callback.getBuilder().getText().equals("!stop")) {
                 stopScheduledLobby();
             } else if (callback.getBuilder().getText().equals("!pass")) {
-                lobbyHandler.sendLobbyMessage("Lobby password: " + lobbyHandler.getLobby().getPassKey());
+                getLobbyHandler().sendLobbyMessage("Lobby password: " + getLobbyHandler().getLobby().getPassKey());
             } else {
                 Long playerId = new SteamID(callback.getBuilder().getAccountId(), EUniverse.Public,
                         EAccountType.Individual).convertToUInt64();
@@ -255,7 +260,7 @@ public class DotaClientImpl extends Dota2Client {
                             String value = callback.getBuilder().getText().split(" ")[2];
                             configureLobby(action, value);
                         } else {
-                            lobbyHandler.sendLobbyMessage("Missing action or value");
+                            getLobbyHandler().sendLobbyMessage("Missing action or value");
                         }
                     }
                     if (callback.getBuilder().getText().startsWith("!kick")) {
@@ -267,7 +272,7 @@ public class DotaClientImpl extends Dota2Client {
                 }
                 for (Entry<String, String> command : appConfig.getChatCommands().entrySet()) {
                     if (callback.getBuilder().getText().equals("!" + command.getKey())) {
-                        lobbyHandler.sendLobbyMessage(command.getValue());
+                        getLobbyHandler().sendLobbyMessage(command.getValue());
                     }
                 }
             }
@@ -282,16 +287,14 @@ public class DotaClientImpl extends Dota2Client {
     private void onLobbyNew(LobbyNewCallback callback) {
         chatHandler.joinLobbyChannel(callback.getLobby());
         lobbyHandler.practiceLobbySetTeamSlot(DOTA_GC_TEAM.DOTA_GC_TEAM_PLAYER_POOL, 1);
-        Serie serie = registerAndWait((Long) callback.getLobby().getLobbyId());
-        if (serie == null) {
-            serie = serieDao.get(new Serie().withActualLobbyId((Long) callback.getLobby().getLobbyId()));
-        }
-        if (serie != null) {
-            readycheck = createLobbycheck(serie);
-            readycheck.start();
-        } else {
-            logger.warn("Series not found");
-        }
+        // Serie serie = serieDao.get(new Serie().withActualLobbyId((Long) callback.getLobby().getLobbyId()));
+        // if (serie == null) {
+        // logger.warn("Serie not found");
+        // serie = new Serie();
+        // serie.setActualLobbyId((Long) callback.getLobby().getLobbyId());
+        // }
+        readycheck = createLobbycheck();
+        readycheck.start();
     }
 
     private void onLobbyRemoved(LobbyRemovedCallback callback) {
@@ -355,7 +358,6 @@ public class DotaClientImpl extends Dota2Client {
             serie.setActualMatchId(null);
             serieDao.update(serie);
         }
-        submitResponse(serie.getActualLobbyId(), serie);
         return callback;
     }
 
@@ -392,7 +394,7 @@ public class DotaClientImpl extends Dota2Client {
     private LobbyNewCallback createPracticeLobby(CMsgPracticeLobbySetDetails.Builder detail) {
         PracticeLobbyCallback result = lobbyHandler.createPracticeLobby(detail.build());
         if (result.getResult().getNumber() <= 1) {
-            return registerAndWait(CSOTypes.LOBBY_VALUE);
+            return registerAndWait(CSOTypes.LOBBY_VALUE, 60l);
         } else {
             throw new RuntimeException(DOTAJoinLobbyResult.forNumber(result.getResult().getNumber()).name());
         }
@@ -407,34 +409,55 @@ public class DotaClientImpl extends Dota2Client {
         }
     }
 
-    public boolean isReadyToTournamentLaunch(CSODOTALobby lobby) {
-        if (lobby != null) {
-            if (!lobby.hasSeriesCurrentSelectionPriorityUsedCoinToss()) {
-                if (lobby.getTeamDetailsCount() == 2 && !StringUtils.isEmpty(lobby.getTeamDetails(0).getTeamName())
-                        && !StringUtils.isEmpty(lobby.getTeamDetails(1).getTeamName())) {
-                    int goodGuysCount = 0;
-                    int badGuysCount = 0;
-                    for (CDOTALobbyMember member : lobby.getMembersList()) {
-                        switch (member.getTeam()) {
-                        case DOTA_GC_TEAM_BAD_GUYS:
-                            badGuysCount++;
-                            break;
-                        case DOTA_GC_TEAM_GOOD_GUYS:
-                            goodGuysCount++;
-                            break;
-                        default:
-                            break;
-                        }
+    public LobbyReadyInfo getInfo(CSODOTALobby lobby) {
+        LobbyReadyInfo info = new LobbyReadyInfo();
 
-                        if (goodGuysCount >= config.getLobbyCountMembers()
-                                && badGuysCount >= config.getLobbyCountMembers()) {
-                            return true;
-                        }
-                    }
+        // team
+        Integer teamCount = 0;
+        for (CLobbyTeamDetails teamDetail : lobby.getTeamDetailsList()) {
+            if (teamDetail.getTeamName() != null) {
+                teamCount++;
+            }
+        }
+        if (teamCount < 2) {
+            info.getMessages().add("Teams are not set");
+        }
+
+        // members
+        int goodGuysCount = 0;
+        int badGuysCount = 0;
+        for (CDOTALobbyMember member : lobby.getMembersList()) {
+            switch (member.getTeam()) {
+            case DOTA_GC_TEAM_BAD_GUYS:
+                badGuysCount++;
+                break;
+            case DOTA_GC_TEAM_GOOD_GUYS:
+                goodGuysCount++;
+                break;
+            default:
+                break;
+            }
+        }
+        if (goodGuysCount < config.getLobbyCountMembers() || badGuysCount < config.getLobbyCountMembers()) {
+            info.getMessages().add("Teams are not complete");
+        }
+
+        // coin toss
+        if (info.getMessages().isEmpty()) {
+            if (!lobby.getSeriesCurrentNonPriorityTeamChoice()
+                    .equals(DOTASelectionPriorityChoice.k_DOTASelectionPriorityChoice_Invalid)
+                    && !lobby.getSeriesCurrentPriorityTeamChoice()
+                            .equals(DOTASelectionPriorityChoice.k_DOTASelectionPriorityChoice_Invalid)) {
+                if (lobby.getState().equals(State.UI)) {
+                    info.setCoinTossReady(true);
+                }
+            } else {
+                if (!lobby.hasSeriesCurrentSelectionPriorityUsedCoinToss()) {
+                    info.setReady(true);
                 }
             }
         }
-        return false;
+        return info;
     }
 
     public NodeInfo getNode(Integer leagueId, Integer team1Id, Integer team2Id) {
@@ -530,48 +553,46 @@ public class DotaClientImpl extends Dota2Client {
         }, 1000));
     }
 
-    private ScheduledFunction createLobbycheck(Serie serie) {
+    private ScheduledFunction createLobbycheck() {
         return (new ScheduledFunction(new Runnable() {
 
-            private Serie serie;
-            private Map<Long, Integer> invitations = new HashedMap<>();
             private LocalDateTime created = LocalDateTime.now();
+            private Serie serie;
+            private Map<Long, Integer> invitations = new HashMap<>();
 
             @Override
             public void run() {
+                if (serie == null) {
+                    serie = serieDao.get(new Serie().withActualLobbyId(getLobbyHandler().getLobby().getLobbyId()));
+                }
+
                 long seconds = Duration.between(created, LocalDateTime.now()).getSeconds();
                 if (seconds > 600) {
                     getLobbyHandler().sendLobbyMessage("Time is over");
-                    serie.setState(DotaGlobalConstant.COMPLETED);
-                    serieDao.update(serie);
+                    if (serie != null) {
+                        serie.setState(DotaGlobalConstant.COMPLETED);
+                        serieDao.update(serie);
+                    }
                     getLobbyHandler().destroyLobby();
                 } else {
                     getLobbyHandler().sendLobbyMessage(((600 - seconds) / 60) + " minutes remaining");
                 }
 
-                String text = getNotReadyText(getLobbyHandler().getLobby());
-                if (text != null) {
-                    getLobbyHandler().sendLobbyMessage(text);
-                }
-                if (getLobbyHandler().getLobby().getLeaderId() == 0) {
-                    getLobbyHandler().sendLobbyMessage("The league is not set");
-                }
-                if (getLobbyHandler().getLobby().getLeagueNodeId() == 0) {
-                    getLobbyHandler().sendLobbyMessage("The series node is not set");
+                LobbyReadyInfo info = getInfo(getLobbyHandler().getLobby());
+                for (String message : info.getMessages()) {
+                    getLobbyHandler().sendLobbyMessage(message);
                 }
 
+                if (getLobbyHandler().getLobby().getLeagueNodeId() == 0) {
+                    getLobbyHandler().sendLobbyMessage("Lobby is not part of the node");
+                }
                 if (serie != null) {
                     invitePlayer(serie.getTeam1(), invitations);
                     invitePlayer(serie.getTeam2(), invitations);
                 }
             }
 
-            public Runnable withSeries(Serie serie) {
-                this.serie = serie;
-                return this;
-            }
-
-        }.withSeries(serie), 60000));
+        }, 60000));
     }
 
     private void invitePlayer(Team team, Map<Long, Integer> invitations) {
@@ -594,32 +615,6 @@ public class DotaClientImpl extends Dota2Client {
                 }
             }
         }
-    }
-
-    public String getNotReadyText(CSODOTALobby lobby) {
-        if (lobby.getTeamDetailsCount() != 2 || StringUtils.isEmpty(lobby.getTeamDetails(0).getTeamName())
-                || StringUtils.isEmpty(lobby.getTeamDetails(1).getTeamName())) {
-            return "Teams are not set";
-        }
-        int goodGuysCount = 0;
-        int badGuysCount = 0;
-        for (CDOTALobbyMember member : lobby.getMembersList()) {
-            switch (member.getTeam()) {
-            case DOTA_GC_TEAM_BAD_GUYS:
-                badGuysCount++;
-                break;
-            case DOTA_GC_TEAM_GOOD_GUYS:
-                goodGuysCount++;
-                break;
-            default:
-                break;
-            }
-        }
-        if (goodGuysCount < config.getLobbyCountMembers() || badGuysCount < config.getLobbyCountMembers()) {
-            return "Teams are not complete";
-        }
-
-        return null;
     }
 
     private String getTournamentName(Integer leagueId) {
@@ -691,20 +686,38 @@ public class DotaClientImpl extends Dota2Client {
         }
     }
 
-    public String getInfo() {
-        StringBuilder info = new StringBuilder();
-        info.append("User: " + config.getUser());
-        info.append(System.lineSeparator());
-        info.append("Logged: " + logged);
-        info.append(System.lineSeparator());
-        info.append("Result: " + result.name());
-        info.append(System.lineSeparator());
-        info.append("ExtendedResult: " + extendedResult.name());
-        info.append(System.lineSeparator());
-        info.append("Lobby: " + getLobbyHandler().getLobby());
-        info.append(System.lineSeparator());
-        info.append(System.lineSeparator());
-        return info.toString();
+    // public String getInfo() {
+    // StringBuilder info = new StringBuilder();
+    // info.append("User: " + config.getUser());
+    // info.append(System.lineSeparator());
+    // info.append("Logged: " + logged);
+    // info.append(System.lineSeparator());
+    // info.append("Result: " + result.name());
+    // info.append(System.lineSeparator());
+    // info.append("ExtendedResult: " + extendedResult.name());
+    // info.append(System.lineSeparator());
+    // info.append("Lobby: " + getLobbyHandler().getLobby());
+    // info.append(System.lineSeparator());
+    // info.append(System.lineSeparator());
+    // return info.toString();
+    // }
+    //
+    public DotaClientInfo getInfo() {
+        DotaClientInfo info = new DotaClientInfo();
+        info.setName(config.getUser());
+        info.setLogged(logged);
+        info.setReady(ready);
+        if (result != null) {
+            info.setResult(result.name());
+        }
+        if (getLobbyHandler().getLobby() != null) {
+            info.setLobbyId(getLobbyHandler().getLobby().getLobbyId());
+        }
+        if (getPartyHandler().getParty() != null) {
+            info.setPartyId(getPartyHandler().getParty().getPartyId());
+        }
+
+        return info;
     }
 
 }
