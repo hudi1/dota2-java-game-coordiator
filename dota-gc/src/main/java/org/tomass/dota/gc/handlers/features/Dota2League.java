@@ -67,12 +67,12 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
         return sendJobAndWait(protobuf);
     }
 
-    public LeagueAvailableLobbyNodes requestLeagueAvaiableNodes(Integer leagueId) {
+    public LeagueAvailableLobbyNodes requestLeagueAvailableNodes(Integer leagueId) {
         ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodesRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTALeagueAvailableLobbyNodesRequest.class,
                 EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodesRequest_VALUE);
         protobuf.getBody().setLeagueId(leagueId);
-        logger.trace(">>requestLeagueAvaiableNodes: " + protobuf.getBody());
+        logger.trace(">>requestLeagueAvailableNodes: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 

@@ -1,27 +1,25 @@
 package org.tomass.dota.gc.handlers.callbacks.chat;
 
-import java.util.Set;
-
 import org.tomass.dota.gc.handlers.features.Dota2Chat.ChatChannel;
 
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 
-public class ChatMembersLeftUpdate extends CallbackMsg {
+public class ChatMembersJoinUpdateCallback extends CallbackMsg {
 
     private ChatChannel channel;
-    private Set<Long> left;
+    private Long playerSteamId;
 
-    public ChatMembersLeftUpdate(ChatChannel channel, Set<Long> left) {
+    public ChatMembersJoinUpdateCallback(ChatChannel channel, Long playerSteamId) {
         this.channel = channel;
-        this.left = left;
+        this.playerSteamId = playerSteamId;
     }
 
     public ChatChannel getChannel() {
         return channel;
     }
 
-    public Set<Long> getLeft() {
-        return left;
+    public Long getPlayerSteamId() {
+        return playerSteamId;
     }
 
 }

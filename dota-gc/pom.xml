@@ -228,7 +228,6 @@
             <artifactId>random-sentence-generator</artifactId>
             <version>0.0.7</version>
         </dependency>
-
     </dependencies>
 
     <profiles>

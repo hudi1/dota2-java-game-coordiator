@@ -30,7 +30,7 @@ public class LobbyDetailsFactory {
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createSeriesLobby(Serie serie) {
-        return createFullLobby(serie.getPassword(), serie.getPassword(), serie.getLeagueId(), serie.getNodeId(),
+        return createFullLobby(serie.getPassword(), serie.getName(), serie.getLeagueId(), serie.getNodeId(),
                 serie.getBestOf());
     }
 

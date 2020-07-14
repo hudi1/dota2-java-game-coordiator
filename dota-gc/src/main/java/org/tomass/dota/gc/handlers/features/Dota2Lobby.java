@@ -181,6 +181,11 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyNew: " + lobby);
+            if (this.lobby != null) {
+                if (lobby.getLobbyId() != this.lobby.getLobbyId()) {
+                    logger.warn("!!handleLobbyNew: " + lobby + " vs " + this.lobby);
+                }
+            }
             this.lobby = lobby;
             client.postCallback(CSOTypes.LOBBY_VALUE, new LobbyNewCallback(lobby));
         } catch (Exception e) {
@@ -192,6 +197,11 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyUpdated: " + lobby);
+            if (this.lobby != null) {
+                if (lobby.getLobbyId() != this.lobby.getLobbyId()) {
+                    logger.warn("!!handleLobbyUpdated: " + lobby + " vs " + this.lobby);
+                }
+            }
             this.lobby = lobby;
             client.postCallback(new LobbyUpdatedCallback(lobby));
             for (CExtraMsg extraMessage : lobby.getExtraMessagesList()) {
@@ -427,6 +437,14 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 channel.send(text);
             }
         }
+    }
+
+    public ChatChannel getLobbyChatChannel() {
+        ChatChannel channel = null;
+        if (lobby != null) {
+            channel = client.getChatHandler().getLobbyChatChannel(lobby.getLobbyId() + "");
+        }
+        return channel;
     }
 
     @Override

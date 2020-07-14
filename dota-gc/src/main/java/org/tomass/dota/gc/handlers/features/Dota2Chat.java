@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatChannelLeft;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatJoinedChannelCallback;
-import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersJoinUpdate;
-import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersLeftUpdate;
-import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersUpdate;
+import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersJoinUpdateCallback;
+import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersLeftUpdateCallback;
+import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersUpdateCallback;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatMessageCallback;
 import org.tomass.dota.gc.util.Tuple2;
 import org.tomass.protobuf.dota.DotaGcmessagesClientChat.CMsgDOTAChatChannelMemberUpdate;
@@ -115,7 +115,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
             }
             channel.processMembers(protobuf.getBody().build());
             if (!left.isEmpty()) {
-                client.postCallback(new ChatMembersLeftUpdate(channel, left));
+                client.postCallback(new ChatMembersLeftUpdateCallback(channel, left));
             }
         }
     }
@@ -123,15 +123,11 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
     public void handleMembersJoinUpdate(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAOtherJoinedChatChannel.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAOtherJoinedChatChannel.class, msg);
-        if (channels.containsKey(protobuf.getBody().getChannelId())) {
+        if (channels.containsKey(Long.valueOf(protobuf.getBody().getChannelId()))) {
             ChatChannel channel = channels.get(protobuf.getBody().getChannelId());
-            Set<Long> join = new HashSet<>();
-            if (protobuf.getBody().getSteamId() != 0) {
-                join.add(protobuf.getBody().getSteamId());
-            }
             channel.processMembers(protobuf.getBody().build());
-            if (!join.isEmpty()) {
-                client.postCallback(new ChatMembersJoinUpdate(channel, join));
+            if (protobuf.getBody().getSteamId() != 0) {
+                client.postCallback(new ChatMembersJoinUpdateCallback(channel, protobuf.getBody().getSteamId()));
             }
         }
     }
@@ -158,7 +154,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
 
             channel.processMembers(protobuf.getBody().build());
             if (!join.isEmpty() || !left.isEmpty()) {
-                client.postCallback(new ChatMembersUpdate(channel, join, left));
+                client.postCallback(new ChatMembersUpdateCallback(channel, join, left));
             }
         }
     }

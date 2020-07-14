@@ -6,14 +6,16 @@ import org.tomass.dota.gc.handlers.features.Dota2Chat.ChatChannel;
 
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 
-public class ChatMembersJoinUpdate extends CallbackMsg {
+public class ChatMembersUpdateCallback extends CallbackMsg {
 
     private ChatChannel channel;
     private Set<Long> join;
+    private Set<Long> left;
 
-    public ChatMembersJoinUpdate(ChatChannel channel, Set<Long> join) {
+    public ChatMembersUpdateCallback(ChatChannel channel, Set<Long> join, Set<Long> left) {
         this.channel = channel;
         this.join = join;
+        this.left = left;
     }
 
     public ChatChannel getChannel() {
@@ -22,6 +24,10 @@ public class ChatMembersJoinUpdate extends CallbackMsg {
 
     public Set<Long> getJoin() {
         return join;
+    }
+
+    public Set<Long> getLeft() {
+        return left;
     }
 
 }

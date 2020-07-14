@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.tomass.dota.gc.clients.model.LobbyReadyInfo;
 import org.tomass.dota.gc.config.SteamClientConfig;
 import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
 import org.tomass.dota.gc.handlers.callbacks.ReadyCallback;
+import org.tomass.dota.gc.handlers.callbacks.chat.ChatMembersJoinUpdateCallback;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatMessageCallback;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueAvailableLobbyNodes;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueInfoAdmin;
@@ -106,19 +108,62 @@ public class DotaClientImpl extends Dota2Client {
         manager.subscribe(LobbyUpdatedCallback.class, this::onLobbyUpdated);
 
         manager.subscribe(MatchSignedOutCallback.class, this::onMatchSignedOut);
+        manager.subscribe(ChatMembersJoinUpdateCallback.class, this::onChatMembersJoin);
+    }
+
+    private void onChatMembersJoin(ChatMembersJoinUpdateCallback callback) {
+        if (getLobbyHandler().getLobbyChatChannel() != null) {
+            if (callback.getChannel().getId() == getLobbyHandler().getLobbyChatChannel().getId()) {
+                Serie serie = serieDao.get(new Serie().withActualLobbyId(getLobbyHandler().getLobby().getLobbyId()));
+                Team team1 = null;
+                Team team2 = null;
+                if (serie != null) {
+                    team1 = teamDao.get(new Team().withId(serie.getTeam1().getId()).withInit_(Association.players));
+                    team2 = teamDao.get(new Team().withId(serie.getTeam2().getId()).withInit_(Association.players));
+                }
+
+                Optional<CDOTALobbyMember> newMember = getLobbyHandler().getLobby().getMembersList().stream()
+                        .filter(m -> m.getId() == callback.getPlayerSteamId()).findFirst();
+                if (newMember.isPresent()) {
+                    SteamID steam = new SteamID(newMember.get().getId());
+                    String team = null;
+                    if (team1.getPlayers().stream().map(p -> p.getAccountId())
+                            .anyMatch(p -> p.longValue() == steam.getAccountID())) {
+                        team = "Radiant";
+                    }
+                    if (team2.getPlayers().stream().map(p -> p.getAccountId())
+                            .anyMatch(p -> p.longValue() == steam.getAccountID())) {
+                        team = "Dire";
+                    }
+                    if (team != null) {
+                        getLobbyHandler()
+                                .sendLobbyMessage("Hello " + newMember.get().getName() + " please choose team " + team);
+                    }
+                }
+
+                // submitResponse(getLobbyHandler().getLobby().getLobbyId(), callback);
+            }
+        }
     }
 
     private void onLobbyUpdated(LobbyUpdatedCallback callback) {
         stopScheduledLobby();
-        LobbyReadyInfo info = getInfo(callback.getLobby());
+        Serie serie = serieDao.get(new Serie().withActualLobbyId(callback.getLobby().getLobbyId()));
+        Team team1 = null;
+        Team team2 = null;
+        if (serie != null) {
+            team1 = teamDao.get(new Team().withId(serie.getTeam1().getId()).withInit_(Association.players));
+            team2 = teamDao.get(new Team().withId(serie.getTeam2().getId()).withInit_(Association.players));
+        }
+        LobbyReadyInfo info = getInfo(callback.getLobby(), team1, team2);
+
         if (info.isCoinTossReady()) {
             lobbyHandler.launchPracticeLobby();
         }
+
         if (callback.getLobby().getState().equals(State.RUN)) {
             lobbyHandler.abandonCurrentGame();
             lobbyHandler.leaveLobby();
-
-            Serie serie = serieDao.get(new Serie().withActualLobbyId(callback.getLobby().getLobbyId()));
             if (serie != null) {
                 serie.setActualMatchId(callback.getLobby().getMatchId());
                 serieDao.update(serie);
@@ -129,6 +174,28 @@ public class DotaClientImpl extends Dota2Client {
             getLobbyHandler().sendLobbyMessage("Lobby is ready to launch");
             launchScheduledLobby();
         }
+
+        // ChatMembersJoinUpdateCallback joinCallback = registerAndWait(callback.getLobby().getLobbyId());
+        // if (joinCallback != null) {
+        // Optional<CDOTALobbyMember> newMember = callback.getLobby().getMembersList().stream()
+        // .filter(m -> m.getId() == joinCallback.getPlayerSteamId()).findFirst();
+        // if (newMember.isPresent()) {
+        // SteamID steam = new SteamID(newMember.get().getId());
+        // String team = null;
+        // if (team1.getPlayers().stream().map(p -> p.getAccountId())
+        // .anyMatch(p -> p.longValue() == steam.getAccountID())) {
+        // team = "Radiant";
+        // }
+        // if (team2.getPlayers().stream().map(p -> p.getAccountId())
+        // .anyMatch(p -> p.longValue() == steam.getAccountID())) {
+        // team = "Dire";
+        // }
+        // if (team != null) {
+        // getLobbyHandler()
+        // .sendLobbyMessage("Hello " + newMember.get().getName() + " please choose team " + team);
+        // }
+        // }
+        // }
     }
 
     private void onReady(ReadyCallback callback) {
@@ -234,7 +301,7 @@ public class DotaClientImpl extends Dota2Client {
         if (callback.getChatChannel().getName().equals("Lobby_" + getLobbyHandler().getLobby().getLobbyId())) {
             if (callback.getBuilder().getText().equals("!launch")) {
                 if (getLobbyHandler().getLobby() != null) {
-                    LobbyReadyInfo info = getInfo(lobbyHandler.getLobby());
+                    LobbyReadyInfo info = getInfo(lobbyHandler.getLobby(), null, null);
                     if (info.isReady()) {
                         launchScheduledLobby();
                     } else {
@@ -293,6 +360,9 @@ public class DotaClientImpl extends Dota2Client {
         // serie = new Serie();
         // serie.setActualLobbyId((Long) callback.getLobby().getLobbyId());
         // }
+        if (readycheck != null) {
+            readycheck.stop();
+        }
         readycheck = createLobbycheck();
         readycheck.start();
     }
@@ -301,14 +371,15 @@ public class DotaClientImpl extends Dota2Client {
         Serie serie = serieDao.get(new Serie().withActualLobbyId(callback.getLobby().getLobbyId()));
         getChatHandler().leaveChannels();
         if (serie != null && !serie.getState().equals(DotaGlobalConstant.COMPLETED)) {
-            switch (callback.getLobby().getState()) {
-            case RUN:
-                serie.setState(DotaGlobalConstant.LIVE);
-                break;
-            default:
-                serie.setState(DotaGlobalConstant.SCHEDULED);
-                break;
-            }
+            // switch (callback.getLobby().getState()) {
+            // case RUN:
+            // serie.setState(DotaGlobalConstant.LIVE);
+            // break;
+            // default:
+            // serie.setState(DotaGlobalConstant.SCHEDULED);
+            // break;
+            // }
+            serie.setState(DotaGlobalConstant.LIVE);
             serieDao.update(serie);
         }
         if (readycheck != null) {
@@ -409,13 +480,22 @@ public class DotaClientImpl extends Dota2Client {
         }
     }
 
-    public LobbyReadyInfo getInfo(CSODOTALobby lobby) {
+    public LobbyReadyInfo getInfo(CSODOTALobby lobby, Team team1, Team team2) {
         LobbyReadyInfo info = new LobbyReadyInfo();
 
         // team
         Integer teamCount = 0;
         for (CLobbyTeamDetails teamDetail : lobby.getTeamDetailsList()) {
-            if (teamDetail.getTeamName() != null) {
+            if (team1 != null && team2 != null) {
+                if (teamDetail.getTeamId() != team1.getTeamId().intValue()
+                        && teamDetail.getTeamId() != team2.getTeamId().intValue()) {
+                    if (info.getMessages().isEmpty()) {
+                        info.getMessages()
+                                .add("Please select valid team " + team1.getName() + " and " + team2.getName());
+                    }
+                }
+            }
+            if (teamDetail.hasTeamName()) {
                 teamCount++;
             }
         }
@@ -427,6 +507,20 @@ public class DotaClientImpl extends Dota2Client {
         int goodGuysCount = 0;
         int badGuysCount = 0;
         for (CDOTALobbyMember member : lobby.getMembersList()) {
+            if (team1 != null && team2 != null) {
+                Integer steamId = (int) new SteamID(member.getId()).getAccountID();
+                if (team1.getPlayers().stream().anyMatch(p -> p.getAccountId().equals(steamId))) {
+                    if (member.getTeam().equals(DOTA_GC_TEAM.DOTA_GC_TEAM_BAD_GUYS)) {
+                        info.getMessages().add("Player " + member.getName() + " is in wrong team ");
+                    }
+                }
+                if (team2.getPlayers().stream().anyMatch(p -> p.getAccountId().equals(steamId))) {
+                    if (member.getTeam().equals(DOTA_GC_TEAM.DOTA_GC_TEAM_GOOD_GUYS)) {
+                        info.getMessages().add("Player " + member.getName() + " is in wrong team ");
+                    }
+                }
+            }
+
             switch (member.getTeam()) {
             case DOTA_GC_TEAM_BAD_GUYS:
                 badGuysCount++;
@@ -461,7 +555,7 @@ public class DotaClientImpl extends Dota2Client {
     }
 
     public NodeInfo getNode(Integer leagueId, Integer team1Id, Integer team2Id) {
-        LeagueAvailableLobbyNodes response = leagueHandler.requestLeagueAvaiableNodes(leagueId);
+        LeagueAvailableLobbyNodes response = leagueHandler.requestLeagueAvailableNodes(leagueId);
         if (response != null) {
             for (NodeInfo nodeInfo : response.getBody().getNodeInfosList()) {
                 if ((nodeInfo.getTeamId1() == team1Id.intValue() || nodeInfo.getTeamId1() == team2Id.intValue())
@@ -476,7 +570,7 @@ public class DotaClientImpl extends Dota2Client {
 
     public String getScheduledLeagueMatches(Integer leagueId) {
         StringBuilder response = new StringBuilder();
-        LeagueAvailableLobbyNodes result = leagueHandler.requestLeagueAvaiableNodes(leagueId);
+        LeagueAvailableLobbyNodes result = leagueHandler.requestLeagueAvailableNodes(leagueId);
         for (Builder nodeInfo : result.getBody().getNodeInfosBuilderList()) {
             TeamInfo teamInfo1 = SteamDota2Match.getTeam(getConfiguration(), nodeInfo.getTeamId1());
             TeamInfo teamInfo2 = SteamDota2Match.getTeam(getConfiguration(), nodeInfo.getTeamId2());
@@ -559,15 +653,21 @@ public class DotaClientImpl extends Dota2Client {
             private LocalDateTime created = LocalDateTime.now();
             private Serie serie;
             private Map<Long, Integer> invitations = new HashMap<>();
+            private Team team1;
+            private Team team2;
 
             @Override
             public void run() {
                 if (serie == null) {
                     serie = serieDao.get(new Serie().withActualLobbyId(getLobbyHandler().getLobby().getLobbyId()));
+                    if (serie != null) {
+                        team1 = teamDao.get(new Team().withId(serie.getTeam1().getId()).withInit_(Association.players));
+                        team2 = teamDao.get(new Team().withId(serie.getTeam2().getId()).withInit_(Association.players));
+                    }
                 }
 
                 long seconds = Duration.between(created, LocalDateTime.now()).getSeconds();
-                if (seconds > 600) {
+                if (seconds > 1800) {
                     getLobbyHandler().sendLobbyMessage("Time is over");
                     if (serie != null) {
                         serie.setState(DotaGlobalConstant.COMPLETED);
@@ -575,10 +675,10 @@ public class DotaClientImpl extends Dota2Client {
                     }
                     getLobbyHandler().destroyLobby();
                 } else {
-                    getLobbyHandler().sendLobbyMessage(((600 - seconds) / 60) + " minutes remaining");
+                    getLobbyHandler().sendLobbyMessage(((1800 - seconds) / 60) + " minutes remaining");
                 }
 
-                LobbyReadyInfo info = getInfo(getLobbyHandler().getLobby());
+                LobbyReadyInfo info = getInfo(getLobbyHandler().getLobby(), team1, team2);
                 for (String message : info.getMessages()) {
                     getLobbyHandler().sendLobbyMessage(message);
                 }
@@ -587,8 +687,8 @@ public class DotaClientImpl extends Dota2Client {
                     getLobbyHandler().sendLobbyMessage("Lobby is not part of the node");
                 }
                 if (serie != null) {
-                    invitePlayer(serie.getTeam1(), invitations);
-                    invitePlayer(serie.getTeam2(), invitations);
+                    invitePlayer(team1, invitations);
+                    invitePlayer(team2, invitations);
                 }
             }
 
@@ -596,7 +696,6 @@ public class DotaClientImpl extends Dota2Client {
     }
 
     private void invitePlayer(Team team, Map<Long, Integer> invitations) {
-        team = teamDao.get(team.withInit_(Association.players));
         for (Player player : team.getPlayers()) {
             Long playerId = new SteamID(player.getAccountId(), EUniverse.Public, EAccountType.Individual)
                     .convertToUInt64();
