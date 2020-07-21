@@ -154,7 +154,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     public void processGcMessage(int id, ByteString contents) {
         IPacketGCMsg packetGCMsg = getPacketGCMsg(id, contents.toByteArray());
-        handleGCMsg(packetGCMsg);
+        gameCoordinator.handleFromGC(packetGCMsg);
     }
 
     private static IPacketGCMsg getPacketGCMsg(int eMsg, byte[] data) {

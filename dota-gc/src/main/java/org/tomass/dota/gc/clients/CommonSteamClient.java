@@ -12,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
@@ -75,6 +78,12 @@ public class CommonSteamClient extends SteamClient {
 
     @Autowired
     protected AppConfig appConfig;
+
+    @Autowired
+    protected MessageSource messageSource;
+
+    @Value("${spring.mvc.locale}")
+    private Locale locale;
 
     public CommonSteamClient(SteamClientConfig config) {
         super(SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi())));
@@ -325,6 +334,10 @@ public class CommonSteamClient extends SteamClient {
             subscribers.remove(key);
             logger.trace("<<registerAndWait: " + value);
         }
+    }
+
+    protected String getString(String key, Object... args) {
+        return messageSource.getMessage(key, args, locale);
     }
 
     public CallbackManager getManager() {

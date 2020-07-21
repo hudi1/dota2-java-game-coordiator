@@ -3,8 +3,6 @@ package org.tomass.dota.gc.handlers.features;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.NotReadyCallback;
 import org.tomass.dota.gc.handlers.callbacks.party.PartyInvitationCreatedCallback;
@@ -39,8 +37,6 @@ import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2Party extends Dota2ClientGCMsgHandler {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 

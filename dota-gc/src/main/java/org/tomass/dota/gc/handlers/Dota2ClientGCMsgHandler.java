@@ -1,5 +1,7 @@
 package org.tomass.dota.gc.handlers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 
@@ -7,6 +9,8 @@ import in.dragonbra.javasteam.base.IClientGCMsg;
 import in.dragonbra.javasteam.types.JobID;
 
 public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
+
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected Dota2SteamGameCoordinator gameCoordinator;
     protected Dota2Client client;
@@ -21,27 +25,38 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
     }
 
     public void send(IClientGCMsg msg) {
-        gameCoordinator.send(msg);
+        if (client.isReady()) {
+            gameCoordinator.send(msg);
+        } else {
+            logger.warn("GC is not ready");
+        }
     }
 
     public JobID sendJob(IClientGCMsg msg) {
-        return gameCoordinator.sendJob(msg);
+        JobID jobID = client.getNextJobID();
+        msg.setSourceJobID(jobID);
+        send(msg);
+        return jobID;
     }
 
     public <T> T sendJobAndWait(IClientGCMsg msg) {
-        return gameCoordinator.sendJobAndWait(msg);
+        sendJob(msg);
+        return client.registerAndWait(msg.getSourceJobID());
     }
 
     public <T> T sendCustomAndWait(IClientGCMsg msg, Object key) {
-        return gameCoordinator.sendCustomAndWait(msg, key);
+        send(msg);
+        return client.registerAndWait(key);
     }
 
     public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
-        return gameCoordinator.sendJobAndWait(msg, timeout);
+        sendJob(msg);
+        return client.registerAndWait(msg.getSourceJobID(), timeout);
     }
 
     public <T> T sendCustomAndWait(IClientGCMsg msg, Object key, Long timeout) {
-        return gameCoordinator.sendCustomAndWait(msg, key, timeout);
+        send(msg);
+        return client.registerAndWait(key, timeout);
     }
 
 }

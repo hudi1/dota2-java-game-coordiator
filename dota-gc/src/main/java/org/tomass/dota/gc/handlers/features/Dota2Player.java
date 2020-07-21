@@ -3,8 +3,6 @@ package org.tomass.dota.gc.handlers.features;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.player.ConductScorecardCallback;
 import org.tomass.dota.gc.handlers.callbacks.player.HeroStandings;
@@ -24,6 +22,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgPlayerConductScorecardR
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgProfileRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgProfileResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientFantasy.CMsgDOTAPlayerInfo;
+import org.tomass.protobuf.dota.DotaGcmessagesCommon.CMsgDOTAProfileCard;
 import org.tomass.protobuf.dota.DotaGcmessagesMsgid.EDOTAGCMsg;
 
 import in.dragonbra.javasteam.base.ClientGCMsgProtobuf;
@@ -31,8 +30,6 @@ import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2Player extends Dota2ClientGCMsgHandler {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
@@ -80,8 +77,8 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
     }
 
     private void handleProfileCardResponse(IPacketGCMsg msg) {
-        ClientGCMsgProtobuf<CMsgClientToGCGetProfileCard.Builder> protobuf = new ClientGCMsgProtobuf<>(
-                CMsgClientToGCGetProfileCard.class, msg);
+        ClientGCMsgProtobuf<CMsgDOTAProfileCard.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgDOTAProfileCard.class,
+                msg);
         logger.trace(">>handleProfileCardResponse: " + protobuf.getBody());
         client.postCallback(new ProfileCardResponse(msg.getTargetJobID(), protobuf.getBody()));
     }
@@ -98,16 +95,16 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
     public ProfileResponse requestProfile(Integer accountId) {
         ClientGCMsgProtobuf<CMsgProfileRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgProfileRequest.class,
                 EDOTAGCMsg.k_EMsgProfileRequest_VALUE);
-        logger.trace(">>requestProfile: " + protobuf.getBody());
         protobuf.getBody().setAccountId(accountId);
+        logger.trace(">>requestProfile: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
     public ProfileCardResponse requestProfileCard(Integer accountId) {
         ClientGCMsgProtobuf<CMsgClientToGCGetProfileCard.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCGetProfileCard.class, EDOTAGCMsg.k_EMsgClientToGCGetProfileCard_VALUE);
-        logger.trace(">>requestProfileCard: " + protobuf.getBody());
         protobuf.getBody().setAccountId(accountId);
+        logger.trace(">>requestProfileCard: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 

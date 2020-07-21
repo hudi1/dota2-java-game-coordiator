@@ -3,13 +3,12 @@ package org.tomass.dota.gc.handlers.features;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueAvailableLobbyNodes;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueInfoAdmin;
 import org.tomass.dota.gc.handlers.callbacks.league.LeagueNodeCallback;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
+import org.tomass.protobuf.dota.DotaGcmessagesCommon.CMsgLeagueAdminList;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodes;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueAvailableLobbyNodesRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonLeague.CMsgDOTALeagueInfoList;
@@ -24,8 +23,6 @@ import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2League extends Dota2ClientGCMsgHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
     public Dota2League() {
@@ -35,6 +32,13 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
         dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodes_VALUE,
                 packetMsg -> handleLeagueAvaiableNodes(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgDOTALeagueNodeResponse_VALUE, packetMsg -> handleLeagueNode(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgGCLeagueAdminList_VALUE, packetMsg -> handleLeagueAdmin(packetMsg));
+    }
+
+    private void handleLeagueAdmin(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgLeagueAdminList.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgLeagueAdminList.class,
+                data);
+        logger.trace(">>handleLeagueAdmin: " + protobuf.getBody());
     }
 
     private void handleLeagueInfoAdmins(IPacketGCMsg data) {

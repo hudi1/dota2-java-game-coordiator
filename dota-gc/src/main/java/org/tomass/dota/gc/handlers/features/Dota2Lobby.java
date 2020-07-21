@@ -3,10 +3,9 @@ package org.tomass.dota.gc.handlers.features;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyCallback;
+import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyEventPointsCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInvitationCreatedCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteCallback;
 import org.tomass.dota.gc.handlers.callbacks.lobby.LobbyInviteRemovedCallback;
@@ -45,6 +44,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetTeamSlot;
+import org.tomass.protobuf.dota.DotaGcmessagesCommon.CMsgLobbyEventPoints;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobby.CExtraMsg;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.CSODOTALobbyInvite;
@@ -64,8 +64,6 @@ import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2Lobby extends Dota2ClientGCMsgHandler {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
     private CSODOTALobby lobby;
@@ -79,6 +77,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE, packetMsg -> handleLobby(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCPracticeLobbyResponse_VALUE, packetMsg -> handlePracticeLobby(packetMsg));
         dispatchMap.put(EGCBaseMsg.k_EMsgGCInvitationCreated_VALUE, packetMsg -> handleInvitationCreated(packetMsg));
+        dispatchMap.put(EDOTAGCMsg.k_EMsgLobbyEventPoints_VALUE, packetMsg -> handleEventPoints(packetMsg));
     }
 
     @Override
@@ -87,6 +86,13 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         client.getManager().subscribe(SingleObjectNewLobby.class, this::onSingleObjectNew);
         client.getManager().subscribe(SingleObjectUpdatedLobby.class, this::onSingleObjectUpdated);
         client.getManager().subscribe(SingleObjectRemovedLobby.class, this::onSingleObjectRemoved);
+    }
+
+    private void handleEventPoints(IPacketGCMsg data) {
+        ClientGCMsgProtobuf<CMsgLobbyEventPoints.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgLobbyEventPoints.class, data);
+        logger.trace(">>handleEventPoints: " + protobuf.getBody());
+        client.postCallback(new LobbyEventPointsCallback(protobuf.getBody()));
     }
 
     private void handlePracticeLobby(IPacketGCMsg data) {
@@ -216,8 +222,12 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyRemoved: " + lobby);
+            if (lobby.hasLobbyId()) {
+                client.postCallback(new LobbyRemovedCallback(lobby));
+            } else {
+                client.postCallback(new LobbyRemovedCallback(this.lobby));
+            }
             this.lobby = null;
-            client.postCallback(new LobbyRemovedCallback(lobby));
         } catch (Exception e) {
             logger.error("!!handleLobbyRemoved: ", e);
         }

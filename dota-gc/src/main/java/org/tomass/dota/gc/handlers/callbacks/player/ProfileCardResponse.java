@@ -1,6 +1,6 @@
 package org.tomass.dota.gc.handlers.callbacks.player;
 
-import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgClientToGCGetProfileCard.Builder;
+import org.tomass.protobuf.dota.DotaGcmessagesCommon.CMsgDOTAProfileCard.Builder;
 
 import in.dragonbra.javasteam.steam.steamclient.callbackmgr.CallbackMsg;
 import in.dragonbra.javasteam.types.JobID;
@@ -9,9 +9,9 @@ public class ProfileCardResponse extends CallbackMsg {
 
     private Builder body;
 
-    public ProfileCardResponse(JobID jobID, Builder body) {
+    public ProfileCardResponse(JobID jobID, Builder builder) {
         setJobID(jobID);
-        this.body = body;
+        this.body = builder;
     }
 
     public Builder getBody() {

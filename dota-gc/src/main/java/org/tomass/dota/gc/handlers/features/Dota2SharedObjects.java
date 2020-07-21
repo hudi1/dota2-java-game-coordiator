@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.PopupCallback;
 import org.tomass.dota.gc.handlers.callbacks.shared.SingleObjectNewLobby;
@@ -40,8 +38,6 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
     public enum ACTION {
         NEW, REMOVED, UPDATED
     };
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
@@ -130,13 +126,19 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
         for (CMsgSOCacheSubscribed subs : welcome.getBody().getOutofdateSubscribedCachesList()) {
             logger.trace("handleClientWelcome: " + subs.getOwnerSoid());
             cache.put(subs.getOwnerSoid(), subs.getObjectsList());
+            boolean lobbyExist = false;
             for (SubscribedType sub : subs.getObjectsList()) {
                 for (ByteString data : sub.getObjectDataList()) {
                     handleSingleObject(ACTION.NEW, sub.getTypeId(), data);
                     if (CSOTypes.LOBBY_VALUE == sub.getTypeId()) {
+                        lobbyExist = true;
+                        // waiting for lobby and then continue
                         client.registerAndWait(sub.getTypeId());
                     }
                 }
+            }
+            if (!lobbyExist && getGameCoordinator().getClient().getLobbyHandler().getLobby() != null) {
+                client.postCallback(new SingleObjectRemovedLobby(CSOTypes.LOBBY_VALUE, ByteString.EMPTY));
             }
         }
     }

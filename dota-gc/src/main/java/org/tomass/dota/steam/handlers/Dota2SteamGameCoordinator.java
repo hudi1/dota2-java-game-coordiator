@@ -12,6 +12,7 @@ import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
 
 import in.dragonbra.javasteam.base.ClientMsgProtobuf;
 import in.dragonbra.javasteam.base.IClientGCMsg;
+import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.base.IPacketMsg;
 import in.dragonbra.javasteam.enums.EMsg;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceInfo;
@@ -19,7 +20,6 @@ import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.C
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgGCClient;
 import in.dragonbra.javasteam.steam.handlers.steamgamecoordinator.SteamGameCoordinator;
 import in.dragonbra.javasteam.steam.handlers.steamgamecoordinator.callback.MessageCallback;
-import in.dragonbra.javasteam.types.JobID;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
@@ -84,10 +84,13 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         if (callback.getAppID() != this.appId) {
             return;
         }
+        handleFromGC(callback.getMessage());
+    }
 
+    public void handleFromGC(IPacketGCMsg packetMsg) {
         for (Map.Entry<Class<? extends ClientGCMsgHandler>, ClientGCMsgHandler> entry : handlers.entrySet()) {
             try {
-                entry.getValue().handleGCMsg(callback.getMessage());
+                entry.getValue().handleGCMsg(packetMsg);
             } catch (Exception e) {
                 logger.warn("Unhandled exception from " + entry.getKey().getName() + " handlers", e);
             }
@@ -139,33 +142,6 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
 
     public void send(IClientGCMsg msg) {
         send(msg, appId);
-    }
-
-    public JobID sendJob(IClientGCMsg msg) {
-        JobID jobID = client.getNextJobID();
-        msg.setSourceJobID(jobID);
-        send(msg);
-        return jobID;
-    }
-
-    public <T> T sendJobAndWait(IClientGCMsg msg) {
-        sendJob(msg);
-        return getClient().registerAndWait(msg.getSourceJobID());
-    }
-
-    public <T> T sendCustomAndWait(IClientGCMsg msg, Object key) {
-        send(msg);
-        return getClient().registerAndWait(key);
-    }
-
-    public <T> T sendJobAndWait(IClientGCMsg msg, Long timeout) {
-        sendJob(msg);
-        return getClient().registerAndWait(msg.getSourceJobID(), timeout);
-    }
-
-    public <T> T sendCustomAndWait(IClientGCMsg msg, Object key, Long timeout) {
-        send(msg);
-        return getClient().registerAndWait(key, timeout);
     }
 
 }

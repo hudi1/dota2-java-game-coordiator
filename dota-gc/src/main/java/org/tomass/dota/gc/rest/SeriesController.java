@@ -71,7 +71,7 @@ public class SeriesController extends BaseCommonController {
         }
 
         Serie serie = new Serie(leagueId, password, team1Db, 0, team2Db, 0, DotaGlobalConstant.SCHEDULED, scheduledTime,
-                0);
+                1);
         serieDao.insert(serie);
         return new ResponseEntity<>(serie, HttpStatus.OK);
     }
@@ -104,7 +104,7 @@ public class SeriesController extends BaseCommonController {
             }
 
             Serie serie = new Serie(leagueId, password, team1Db, 0, team2Db, 0, DotaGlobalConstant.SCHEDULED,
-                    scheduledTime, 0);
+                    scheduledTime, 1);
             serie.setNodeId(nodeId);
             serieDao.insert(serie);
             return new ResponseEntity<>(serie, HttpStatus.OK);
