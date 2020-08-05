@@ -12,7 +12,6 @@ import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
@@ -20,10 +19,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.MessageSource;
-import org.tomass.dota.gc.config.AppConfig;
 import org.tomass.dota.gc.config.SteamClientConfig;
 
 import in.dragonbra.javasteam.base.IClientMsg;
@@ -76,17 +71,9 @@ public class CommonSteamClient extends SteamClient {
 
     private Map<Object, CompletableFuture<Object>> subscribers = new HashMap<>();
 
-    @Autowired
-    protected AppConfig appConfig;
-
-    @Autowired
-    protected MessageSource messageSource;
-
-    @Value("${spring.mvc.locale}")
-    private Locale locale;
-
     public CommonSteamClient(SteamClientConfig config) {
-        super(SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi())));
+        super(config.getSteamWebApi() != null ? SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi()))
+                : SteamConfiguration.createDefault());
         this.config = config;
         init();
     }
@@ -131,8 +118,9 @@ public class CommonSteamClient extends SteamClient {
         details.setShouldRememberPassword(true);
         try {
             File sentry = new File(config.getSentry());
-            if (sentry.exists())
+            if (sentry.exists()) {
                 details.setSentryFileHash(calculateSHA1(sentry));
+            }
         } catch (Exception e) {
             logger.error("!!onConnected: ", e);
         }
@@ -179,6 +167,16 @@ public class CommonSteamClient extends SteamClient {
         result = callback.getResult();
         extendedResult = null;
         logged = false;
+        if (config.isReconnectOnDisconnect()) {
+            logger.info("Logged off from Steam, reconnecting in 5...");
+            try {
+                Thread.sleep(5000L);
+            } catch (InterruptedException e) {
+            }
+            connect();
+        } else {
+            logger.info("Logged off from Steam");
+        }
     }
 
     private void onMachineAuth(UpdateMachineAuthCallback callback) {
@@ -336,10 +334,6 @@ public class CommonSteamClient extends SteamClient {
         }
     }
 
-    protected String getString(String key, Object... args) {
-        return messageSource.getMessage(key, args, locale);
-    }
-
     public CallbackManager getManager() {
         return manager;
     }
@@ -350,14 +344,6 @@ public class CommonSteamClient extends SteamClient {
 
     public SteamClientConfig getConfig() {
         return config;
-    }
-
-    public AppConfig getAppConfig() {
-        return appConfig;
-    }
-
-    public void setAppConfig(AppConfig appConfig) {
-        this.appConfig = appConfig;
     }
 
     public EResult getResult() {

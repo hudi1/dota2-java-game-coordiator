@@ -2,7 +2,6 @@ package org.tomass.dota.gc.util;
 
 import java.util.UUID;
 
-import org.tomass.dota.model.Serie;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPracticeLobbySetDetails;
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.LobbyDotaTVDelay;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTALobbyVisibility;
@@ -27,15 +26,6 @@ public class LobbyDetailsFactory {
                 .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic)
                 .setSeriesType(seriesType).setLeagueid(leagueId).setLeagueNodeId(nodeId);
         return details;
-    }
-
-    public static CMsgPracticeLobbySetDetails.Builder createSeriesLobby(Serie serie) {
-        return createFullLobby(serie.getPassword(), serie.getName(), serie.getLeagueId(), serie.getNodeId(),
-                serie.getBestOf());
-    }
-
-    public static CMsgPracticeLobbySetDetails.Builder createLobby(Serie lobby) {
-        return createSimpleLobby(lobby.getPassword(), lobby.getName());
     }
 
 }

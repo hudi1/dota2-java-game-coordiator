@@ -1,10 +1,7 @@
 package org.tomass.dota.webapi;
 
-import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,14 +107,18 @@ public class SteamDota2Match {
     }
 
     public static void main(String[] args) {
-        League league = getLeagueMatchHistory(
-                SteamConfiguration.create(c -> c.withWebAPIKey("0C04A32A96BEC7F7C1BA4A6B45FC3435")), 11660);
+        // League league = getLeagueMatchHistory(
+        // SteamConfiguration.create(c -> c.withWebAPIKey("0C04A32A96BEC7F7C1BA4A6B45FC3435")), 11660);
+        //
+        // List<TeamInfo> teams = league.getTeams().values().stream().sorted(Comparator.comparingInt(TeamInfo::getWins))
+        // .collect(Collectors.toList());
+        // for (TeamInfo teamInfo : teams) {
+        // System.out.println(teamInfo.getName() + " " + teamInfo.getWins());
+        // }
 
-        List<TeamInfo> teams = league.getTeams().values().stream().sorted(Comparator.comparingInt(TeamInfo::getWins))
-                .collect(Collectors.toList());
-        for (TeamInfo teamInfo : teams) {
-            System.out.println(teamInfo.getName() + " " + teamInfo.getWins());
-        }
+        TeamInfo team = getTeam(SteamConfiguration.create(c -> c.withWebAPIKey("0C04A32A96BEC7F7C1BA4A6B45FC3435")),
+                7958982);
+        System.out.println(team);
 
     }
 

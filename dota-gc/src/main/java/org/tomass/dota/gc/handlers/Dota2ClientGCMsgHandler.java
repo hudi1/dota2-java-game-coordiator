@@ -29,6 +29,7 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
             gameCoordinator.send(msg);
         } else {
             logger.warn("GC is not ready");
+            throw new RuntimeException("GC is not ready");
         }
     }
 

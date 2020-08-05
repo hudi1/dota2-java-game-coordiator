@@ -163,7 +163,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void handleLobbyInvite(ByteString data) {
+    private void handleLobbyInvite(ByteString data) {
         try {
             CSODOTALobbyInvite lobbyInvite = CSODOTALobbyInvite.parseFrom(data);
             logger.trace(">>handleLobbyInvite: " + lobbyInvite);
@@ -173,7 +173,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void handleLobbyInviteRemoved(ByteString data) {
+    private void handleLobbyInviteRemoved(ByteString data) {
         try {
             CSODOTALobbyInvite lobbyInvite = CSODOTALobbyInvite.parseFrom(data);
             logger.trace(">>handleLobbyInviteRemoved: " + lobbyInvite);
@@ -183,7 +183,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void handleLobbyNew(ByteString data) {
+    private void handleLobbyNew(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyNew: " + lobby);
@@ -199,7 +199,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void handleLobbyUpdated(ByteString data) {
+    private void handleLobbyUpdated(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyUpdated: " + lobby);
@@ -218,7 +218,7 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         }
     }
 
-    public void handleLobbyRemoved(ByteString data) {
+    private void handleLobbyRemoved(ByteString data) {
         try {
             CSODOTALobby lobby = CSODOTALobby.parseFrom(data);
             logger.trace(">>handleLobbyRemoved: " + lobby);
@@ -256,7 +256,9 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     public void configPracticeLobby(CMsgPracticeLobbySetDetails options) {
         ClientGCMsgProtobuf<CMsgPracticeLobbySetDetails.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbySetDetails.class, EDOTAGCMsg.k_EMsgGCPracticeLobbySetDetails_VALUE);
-
+        if (lobby == null) {
+            return;
+        }
         protobuf.getBody().mergeFrom(options);
         protobuf.getBody().setLobbyId(lobby.getLobbyId());
         logger.trace(">>configPracticeLobby: " + protobuf.getBody());
@@ -273,18 +275,17 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCLobbyListResponse_VALUE);
     }
 
-    public LobbyCallback getPracticeLobbyList(String password) {
+    public LobbyCallback requestPracticeLobbyList() {
         ClientGCMsgProtobuf<CMsgPracticeLobbyList.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPracticeLobbyList.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyList_VALUE);
-        protobuf.getBody().setPassKey(password);
-        logger.trace(">>getPracticeLobbyList: " + protobuf.getBody());
+        logger.trace(">>requestPracticeLobbyList: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
-    public LobbyCallback getFriendPracticeLobbyList() {
+    public LobbyCallback requestFriendPracticeLobbyList() {
         ClientGCMsgProtobuf<CMsgFriendPracticeLobbyListRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgFriendPracticeLobbyListRequest.class, EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListRequest_VALUE);
-        logger.trace(">>getFriendPracticeLobbyList: " + protobuf.getBody());
+        logger.trace(">>requestFriendPracticeLobbyList: " + protobuf.getBody());
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCFriendPracticeLobbyListResponse_VALUE);
     }
 
@@ -309,10 +310,10 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
     }
 
     public void inviteToLobby(Integer accountId) {
-        inviteToLobbyLong(new SteamID(accountId, EUniverse.Public, EAccountType.Individual).convertToUInt64());
+        inviteToLobbySteam(new SteamID(accountId, EUniverse.Public, EAccountType.Individual).convertToUInt64());
     }
 
-    public void inviteToLobbyLong(long steamId) {
+    public void inviteToLobbySteam(long steamId) {
         if (lobby == null) {
             return;
         }

@@ -20,10 +20,6 @@ public class SteamClientConfig {
 
     private boolean reconnectOnDisconnect;
 
-    private Integer partyCountMembers;
-
-    private Integer lobbyCountMembers;
-
     private String steamWebApi;
 
     public String getUser() {
@@ -96,30 +92,6 @@ public class SteamClientConfig {
 
     public void setPersonaName(String personaName) {
         this.personaName = personaName;
-    }
-
-    public Integer getPartyCountMembers() {
-        return partyCountMembers;
-    }
-
-    public void setPartyCountMembers(Integer partyCountMembers) {
-        this.partyCountMembers = partyCountMembers;
-    }
-
-    public Integer getLobbyCountMembers() {
-        return lobbyCountMembers;
-    }
-
-    public void setLobbyCountMembers(Integer lobbyCountMembers) {
-        this.lobbyCountMembers = lobbyCountMembers;
-    }
-
-    @Override
-    public String toString() {
-        return "SteamClientConfig [user=" + user + ", pass=*****" + ", authCode=" + authCode + ", twoFactorAuth="
-                + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
-                + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
-                + ", partyCountMembers=" + partyCountMembers + ", lobbyCountMembers=" + lobbyCountMembers + "]";
     }
 
     public String getSteamWebApi() {

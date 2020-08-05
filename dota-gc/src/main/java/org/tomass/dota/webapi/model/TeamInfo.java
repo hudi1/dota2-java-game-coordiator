@@ -13,6 +13,8 @@ public class TeamInfo {
 
     private String name;
 
+    private String tag;
+
     private Integer id;
 
     private Integer wins;
@@ -76,6 +78,7 @@ public class TeamInfo {
         if (keyValue.get(TEAMS).getChildren().size() > 0) {
             KeyValue children = keyValue.get(TEAMS).getChildren().get(0);
             team.setName(children.get("name").asString());
+            team.setTag(children.get("tag").asString());
             for (int i = 0; i < children.getChildren().size() - 9; i++) {
                 Integer accountId = children.get("player_" + i + "_account_id").asInteger();
                 Player player = new Player();
@@ -127,6 +130,14 @@ public class TeamInfo {
     @Override
     public String toString() {
         return "TeamInfo [players=" + players + ", name=" + name + ", id=" + id + ", wins=" + wins + "]";
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 
 }
