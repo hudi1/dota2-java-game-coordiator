@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatChannelLeft;
 import org.tomass.dota.gc.handlers.callbacks.chat.ChatJoinedChannelCallback;
@@ -36,8 +34,6 @@ import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.util.compat.Consumer;
 
 public class Dota2Chat extends Dota2ClientGCMsgHandler {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
@@ -91,7 +87,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
             }
             client.postCallback(new ChatJoinedChannelCallback(channel));
         } else {
-            logger.warn("handleJoinResponse: " + protobuf.getBody());
+            getLogger().warn("handleJoinResponse: " + protobuf.getBody());
         }
     }
 
@@ -164,7 +160,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
                 CMsgDOTAJoinChatChannel.class, EDOTAGCMsg.k_EMsgGCJoinChatChannel_VALUE);
         protobuf.getBody().setChannelName(channelName);
         protobuf.getBody().setChannelType(channelType);
-        logger.trace(">>joinChannel: " + protobuf.getBody());
+        getLogger().trace(">>joinChannel: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -189,7 +185,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
     public void getChannelList() {
         ClientGCMsgProtobuf<CMsgDOTARequestChatChannelList.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTARequestChatChannelList.class, EDOTAGCMsg.k_EMsgGCRequestChatChannelList_VALUE);
-        logger.trace(">>getChannelList: " + protobuf.getBody());
+        getLogger().trace(">>getChannelList: " + protobuf.getBody());
     }
 
     public void leaveChannels() {
@@ -205,7 +201,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
             ClientGCMsgProtobuf<CMsgDOTALeaveChatChannel.Builder> protobuf = new ClientGCMsgProtobuf<>(
                     CMsgDOTALeaveChatChannel.class, EDOTAGCMsg.k_EMsgGCLeaveChatChannel_VALUE);
             protobuf.getBody().setChannelId(channelId);
-            logger.trace(">>leaveChannel: " + protobuf.getBody());
+            getLogger().trace(">>leaveChannel: " + protobuf.getBody());
             send(protobuf);
 
             removeChannel(channelId);
@@ -233,7 +229,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.info(">>handleGCMsg chat msg: " + packetGCMsg.getMsgType());
+            getLogger().info(">>handleGCMsg chat msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }
@@ -290,7 +286,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
                     CMsgDOTAChatMessage.class, EDOTAGCMsg.k_EMsgGCChatMessage_VALUE);
             protobuf.getBody().setChannelId(id);
             protobuf.getBody().setText(message);
-            logger.trace(">>ChatChannelSend: " + protobuf.getBody());
+            getLogger().trace(">>ChatChannelSend: " + protobuf.getBody());
             dota2chat.send(protobuf);
         }
 
@@ -301,7 +297,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
                 protobuf.getBody().setChannelId(id);
                 protobuf.getBody().setShareLobbyId(dota2chat.client.getLobbyHandler().getLobby().getLobbyId());
                 protobuf.getBody().setShareLobbyPasskey(dota2chat.client.getLobbyHandler().getLobby().getPassKey());
-                logger.trace(">>ChatChannelshareLobby: " + protobuf.getBody());
+                getLogger().trace(">>ChatChannelshareLobby: " + protobuf.getBody());
                 dota2chat.send(protobuf);
             }
         }
@@ -311,7 +307,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
                     CMsgDOTAChatMessage.class, EDOTAGCMsg.k_EMsgGCChatMessage_VALUE);
             protobuf.getBody().setChannelId(id);
             protobuf.getBody().setCoinFlip(true);
-            logger.trace(">>ChatChannelflipCoin: " + protobuf.getBody());
+            getLogger().trace(">>ChatChannelflipCoin: " + protobuf.getBody());
             dota2chat.send(protobuf);
         }
 
@@ -321,7 +317,7 @@ public class Dota2Chat extends Dota2ClientGCMsgHandler {
             protobuf.getBody().setChannelId(id);
             protobuf.getBody().getDiceRollBuilder().setRollMin(min != null ? min : 1)
                     .setRollMax(max != null ? max : 100).build();
-            logger.trace(">>ChatChannelflipCoin: " + protobuf.getBody());
+            getLogger().trace(">>ChatChannelflipCoin: " + protobuf.getBody());
             dota2chat.send(protobuf);
         }
 

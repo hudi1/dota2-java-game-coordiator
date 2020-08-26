@@ -51,42 +51,42 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
     private void handlePlayerInfo(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAPlayerInfo.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgDOTAPlayerInfo.class,
                 msg);
-        logger.trace(">>handlePlayerInfo: " + protobuf.getBody());
+        getLogger().trace(">>handlePlayerInfo: " + protobuf.getBody());
         client.postCallback(msg.getMsgType(), new PlayerInfoCallback(protobuf.getBody()));
     }
 
     private void handleConductScorecard(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgPlayerConductScorecard.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPlayerConductScorecard.class, msg);
-        logger.trace(">>handleConductScorecard: " + protobuf.getBody());
+        getLogger().trace(">>handleConductScorecard: " + protobuf.getBody());
         client.postCallback(msg.getMsgType(), new ConductScorecardCallback(protobuf.getBody()));
     }
 
     private void handleHeroStandings(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCGetHeroStandingsResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCGetHeroStandingsResponse.class, msg);
-        logger.trace(">>handleHeroStandings: " + protobuf.getBody());
+        getLogger().trace(">>handleHeroStandings: " + protobuf.getBody());
         client.postCallback(msg.getMsgType(), new HeroStandings(protobuf.getBody()));
     }
 
     private void handleProfileResponse(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgProfileResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgProfileResponse.class,
                 msg);
-        logger.trace(">>handleProfileResponse: " + protobuf.getBody());
+        getLogger().trace(">>handleProfileResponse: " + protobuf.getBody());
         client.postCallback(new ProfileResponse(msg.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handleProfileCardResponse(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAProfileCard.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgDOTAProfileCard.class,
                 msg);
-        logger.trace(">>handleProfileCardResponse: " + protobuf.getBody());
+        getLogger().trace(">>handleProfileCardResponse: " + protobuf.getBody());
         client.postCallback(new ProfileCardResponse(msg.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handlePlayerStats(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCToClientPlayerStatsResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientPlayerStatsResponse.class, msg);
-        logger.trace(">>handlePlayerStats: " + protobuf.getBody());
+        getLogger().trace(">>handlePlayerStats: " + protobuf.getBody());
         client.postCallback(new PlayerStatsResponse(msg.getTargetJobID(), protobuf.getBody()));
     }
 
@@ -96,7 +96,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgProfileRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgProfileRequest.class,
                 EDOTAGCMsg.k_EMsgProfileRequest_VALUE);
         protobuf.getBody().setAccountId(accountId);
-        logger.trace(">>requestProfile: " + protobuf.getBody());
+        getLogger().trace(">>requestProfile: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -104,7 +104,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgClientToGCGetProfileCard.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCGetProfileCard.class, EDOTAGCMsg.k_EMsgClientToGCGetProfileCard_VALUE);
         protobuf.getBody().setAccountId(accountId);
-        logger.trace(">>requestProfileCard: " + protobuf.getBody());
+        getLogger().trace(">>requestProfileCard: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -112,7 +112,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgClientToGCPlayerStatsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCPlayerStatsRequest.class, EDOTAGCMsg.k_EMsgClientToGCPlayerStatsRequest_VALUE);
         protobuf.getBody().setAccountId(accountId);
-        logger.trace(">>requestPlayerStats: " + protobuf.getBody());
+        getLogger().trace(">>requestPlayerStats: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -122,7 +122,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgGCPlayerInfoRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCPlayerInfoRequest.class, EDOTAGCMsg.k_EMsgGCPlayerInfoRequest_VALUE);
         protobuf.getBody().addPlayerInfosBuilder().setAccountId(accountId).build();
-        logger.trace(">>requestPlayerStats: " + protobuf.getBody());
+        getLogger().trace(">>requestPlayerStats: " + protobuf.getBody());
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCPlayerInfo_VALUE);
     }
 
@@ -130,14 +130,14 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgPlayerConductScorecardRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPlayerConductScorecardRequest.class,
                 EDOTAGCMsg.k_EMsgClientToGCLatestConductScorecardRequest_VALUE);
-        logger.trace(">>requestConductScorecard: " + protobuf.getBody());
+        getLogger().trace(">>requestConductScorecard: " + protobuf.getBody());
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgClientToGCLatestConductScorecard_VALUE);
     }
 
     public HeroStandings requestHeroStanding() {
         ClientGCMsgProtobuf<CMsgGCGetHeroStandings.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCGetHeroStandings.class, EDOTAGCMsg.k_EMsgGCGetHeroStandings_VALUE);
-        logger.trace(">>requestHeroStanding: " + protobuf.getBody());
+        getLogger().trace(">>requestHeroStanding: " + protobuf.getBody());
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCGetHeroStandingsResponse_VALUE);
     }
 
@@ -151,7 +151,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg player msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg player msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

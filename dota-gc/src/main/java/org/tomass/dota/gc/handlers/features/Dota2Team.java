@@ -30,7 +30,7 @@ public class Dota2Team extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg team msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg team msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

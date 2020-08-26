@@ -1,7 +1,6 @@
 package org.tomass.dota.gc.handlers;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 
@@ -9,8 +8,6 @@ import in.dragonbra.javasteam.base.IClientGCMsg;
 import in.dragonbra.javasteam.types.JobID;
 
 public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
-
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     protected Dota2SteamGameCoordinator gameCoordinator;
     protected Dota2Client client;
@@ -28,7 +25,7 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
         if (client.isReady()) {
             gameCoordinator.send(msg);
         } else {
-            logger.warn("GC is not ready");
+            getLogger().warn("GC is not ready");
             throw new RuntimeException("GC is not ready");
         }
     }
@@ -58,6 +55,10 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
     public <T> T sendCustomAndWait(IClientGCMsg msg, Object key, Long timeout) {
         send(msg);
         return client.registerAndWait(key, timeout);
+    }
+
+    public Logger getLogger() {
+        return client.getLogger();
     }
 
 }

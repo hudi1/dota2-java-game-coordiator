@@ -38,27 +38,27 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
     private void handleLeagueAdmin(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgLeagueAdminList.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgLeagueAdminList.class,
                 data);
-        logger.trace(">>handleLeagueAdmin: " + protobuf.getBody());
+        getLogger().trace(">>handleLeagueAdmin: " + protobuf.getBody());
     }
 
     private void handleLeagueInfoAdmins(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTALeagueInfoList.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTALeagueInfoList.class, data);
-        logger.trace(">>handleLeagueInfoAdmins: " + protobuf.getBody());
+        getLogger().trace(">>handleLeagueInfoAdmins: " + protobuf.getBody());
         client.postCallback(new LeagueInfoAdmin(data.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handleLeagueAvaiableNodes(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTALeagueAvailableLobbyNodes.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTALeagueAvailableLobbyNodes.class, data);
-        logger.trace(">>handleLeagueAvaiableNodes: " + protobuf.getBody());
+        getLogger().trace(">>handleLeagueAvaiableNodes: " + protobuf.getBody());
         client.postCallback(new LeagueAvailableLobbyNodes(data.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handleLeagueNode(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTALeagueNodeResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTALeagueNodeResponse.class, data);
-        logger.trace(">>handleLeagueNodeRequest: " + protobuf.getBody());
+        getLogger().trace(">>handleLeagueNodeRequest: " + protobuf.getBody());
         client.postCallback(new LeagueNodeCallback(data.getTargetJobID(), protobuf.getBody()));
     }
 
@@ -67,7 +67,7 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
     public LeagueInfoAdmin requestLeagueInfoAdmins() {
         ClientGCMsgProtobuf<CMsgDOTALeagueInfoListAdminsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTALeagueInfoListAdminsRequest.class, EDOTAGCMsg.k_EMsgDOTALeagueInfoListAdminsRequest_VALUE);
-        logger.trace(">>requestLeagueInfoAdmins: " + protobuf.getBody());
+        getLogger().trace(">>requestLeagueInfoAdmins: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -76,7 +76,7 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
                 CMsgDOTALeagueAvailableLobbyNodesRequest.class,
                 EDOTAGCMsg.k_EMsgDOTALeagueAvailableLobbyNodesRequest_VALUE);
         protobuf.getBody().setLeagueId(leagueId);
-        logger.trace(">>requestLeagueAvailableNodes: " + protobuf.getBody());
+        getLogger().trace(">>requestLeagueAvailableNodes: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -85,7 +85,7 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
                 CMsgDOTALeagueNodeRequest.class, EDOTAGCMsg.k_EMsgDOTALeagueNodeRequest_VALUE);
         protobuf.getBody().setLeagueId(leagueId);
         protobuf.getBody().setNodeId(nodeId);
-        logger.trace(">>requestLeagueNodeRequest: " + protobuf.getBody());
+        getLogger().trace(">>requestLeagueNodeRequest: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -99,7 +99,7 @@ public class Dota2League extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg team msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg team msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

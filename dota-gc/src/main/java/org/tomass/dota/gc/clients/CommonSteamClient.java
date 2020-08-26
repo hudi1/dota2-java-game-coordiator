@@ -49,7 +49,7 @@ public class CommonSteamClient extends SteamClient {
 
     public static final Long DEFAULT_TIMEOUT = 10l;
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger;
 
     protected SteamClientConfig config;
 
@@ -75,6 +75,11 @@ public class CommonSteamClient extends SteamClient {
         super(config.getSteamWebApi() != null ? SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi()))
                 : SteamConfiguration.createDefault());
         this.config = config;
+        if (config.isSeparateLogger()) {
+            this.logger = LoggerFactory.getLogger(config.getUser());
+        } else {
+            this.logger = LoggerFactory.getLogger(getClass());
+        }
         init();
     }
 
@@ -129,7 +134,7 @@ public class CommonSteamClient extends SteamClient {
     }
 
     private void onDisconnected(DisconnectedCallback callback) {
-        if (config.isReconnectOnDisconnect() && logged) {
+        if (config.isReconnectOnDisconnect() && !callback.isUserInitiated()) {
             logger.info("Disconnected from Steam, reconnecting in 5...");
             try {
                 Thread.sleep(5000L);
@@ -155,6 +160,14 @@ public class CommonSteamClient extends SteamClient {
         if (callback.getResult() != EResult.OK) {
             logger.info("Unable to logon to Steam: " + callback.getResult() + " / " + callback.getExtendedResult());
             disconnect();
+            if (callback.getResult() == EResult.ServiceUnavailable) {
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                }
+                if (running == false)
+                    connect();
+            }
             return;
         }
 
@@ -360,6 +373,10 @@ public class CommonSteamClient extends SteamClient {
 
     public void setExtendedResult(EResult extendedResult) {
         this.extendedResult = extendedResult;
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 
 }

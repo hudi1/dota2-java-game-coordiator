@@ -22,6 +22,8 @@ public class SteamClientConfig {
 
     private String steamWebApi;
 
+    private boolean separateLogger;
+
     public String getUser() {
         return user;
     }
@@ -100,6 +102,22 @@ public class SteamClientConfig {
 
     public void setSteamWebApi(String steamWebApi) {
         this.steamWebApi = steamWebApi;
+    }
+
+    public boolean isSeparateLogger() {
+        return separateLogger;
+    }
+
+    public void setSeparateLogger(boolean separateLogger) {
+        this.separateLogger = separateLogger;
+    }
+
+    @Override
+    public String toString() {
+        return "SteamClientConfig [user=" + user + ", pass=" + pass + ", authCode=" + authCode + ", twoFactorAuth="
+                + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
+                + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
+                + ", steamWebApi=" + steamWebApi + ", separateLogger=" + separateLogger + "]";
     }
 
 }

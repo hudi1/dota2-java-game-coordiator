@@ -62,14 +62,14 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     private void handleMmstats(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAMatchmakingStatsResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAMatchmakingStatsResponse.class, msg);
-        logger.trace(">>handleMmstats: " + protobuf.getBody());
+        getLogger().trace(">>handleMmstats: " + protobuf.getBody());
         client.postCallback(new MatchMakingStatsCallback(protobuf.getBody()));
     }
 
     private void handleTopSourceTv(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCToClientFindTopSourceTVGamesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientFindTopSourceTVGamesResponse.class, msg);
-        logger.trace(">>handleTopSourceTv: " + protobuf.getBody());
+        getLogger().trace(">>handleTopSourceTv: " + protobuf.getBody());
         TopSourceTvGamesCallback callback = new TopSourceTvGamesCallback(protobuf.getBody());
         if (protobuf.getBody().getSpecificGames()) {
             client.postCallback(msg.getMsgType(), callback);
@@ -81,61 +81,61 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     private void handlePlayerMatchHistory(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAGetPlayerMatchHistoryResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAGetPlayerMatchHistoryResponse.class, msg);
-        logger.trace(">>handlePlayerMatchHistory: " + protobuf.getBody());
+        getLogger().trace(">>handlePlayerMatchHistory: " + protobuf.getBody());
         client.postCallback(new MatchHistoryCallback(protobuf.getBody()));
     }
 
     private void handleMatches(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTARequestMatchesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTARequestMatchesResponse.class, data);
-        logger.trace(">>handleMatches: " + protobuf.getBody());
+        getLogger().trace(">>handleMatches: " + protobuf.getBody());
         client.postCallback(new RequestMatchesCallback(protobuf.getBody()));
     }
 
     private void handleMatchesMinimal(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTAMatchMinimal.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAMatchMinimal.class, data);
-        logger.trace(">>handleMatchesMinimal: " + protobuf.getBody());
+        getLogger().trace(">>handleMatchesMinimal: " + protobuf.getBody());
         client.postCallback(new MatchesMinimalCallback(protobuf.getBody()));
     }
 
     private void handleWatchGame(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgWatchGameResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgWatchGameResponse.class, msg);
-        logger.trace(">>handleWatchGame: " + protobuf.getBody());
+        getLogger().trace(">>handleWatchGame: " + protobuf.getBody());
         client.postCallback(new WatchGameCallback(protobuf.getBody()));
     }
 
     private void handleSteamDatagramTicket(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgClientToGCRequestSteamDatagramTicketResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCRequestSteamDatagramTicketResponse.class, msg);
-        logger.trace(">>handleSteamDatagramTicket: " + protobuf.getBody());
+        getLogger().trace(">>handleSteamDatagramTicket: " + protobuf.getBody());
         client.postCallback(new DatagramTicketCallback(protobuf.getBody()));
     }
 
     private void handleTopFriendMatches(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCToClientTopFriendMatchesResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientTopFriendMatchesResponse.class, msg);
-        logger.trace(">>handleTopFriendMatches: " + protobuf.getBody());
+        getLogger().trace(">>handleTopFriendMatches: " + protobuf.getBody());
     }
 
     private void handleMatchMakingStats(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgDOTAMatchmakingStatsResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAMatchmakingStatsResponse.class, msg);
-        logger.trace(">>handleMatchMakingStats: " + protobuf.getBody());
+        getLogger().trace(">>handleMatchMakingStats: " + protobuf.getBody());
     }
 
     private void handleMatchDetails(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCMatchDetailsResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCMatchDetailsResponse.class, msg);
-        logger.trace(">>handleMatchDetails: " + protobuf.getBody());
+        getLogger().trace(">>handleMatchDetails: " + protobuf.getBody());
         client.postCallback(new MatchDetailsCallback(protobuf.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handleMatchSignedOut(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgGCToClientMatchSignedOut.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCToClientMatchSignedOut.class, msg);
-        logger.trace(">>handleMatchSignedOut: " + protobuf.getBody());
+        getLogger().trace(">>handleMatchSignedOut: " + protobuf.getBody());
         client.postCallback(new MatchSignedOutCallback(protobuf.getBody()));
     }
 
@@ -144,7 +144,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     public TopSourceTvGamesCallback requestTopSourceTvGames(long lobbyId) {
         ClientGCMsgProtobuf<CMsgClientToGCFindTopSourceTVGames.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCFindTopSourceTVGames.class, EDOTAGCMsg.k_EMsgClientToGCFindTopSourceTVGames_VALUE);
-        logger.trace(">>requestTopSourceTvGames: " + protobuf.getBody());
+        getLogger().trace(">>requestTopSourceTvGames: " + protobuf.getBody());
         protobuf.getBody().addLobbyIds(lobbyId);
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCToClientFindTopSourceTVGamesResponse_VALUE);
     }
@@ -152,7 +152,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     public void requestTopFriendMatches() {
         ClientGCMsgProtobuf<CMsgClientToGCTopFriendMatchesRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgClientToGCTopFriendMatchesRequest.class, EDOTAGCMsg.k_EMsgClientToGCTopFriendMatchesRequest_VALUE);
-        logger.trace(">>requestTopSourceTvGames: " + protobuf.getBody());
+        getLogger().trace(">>requestTopSourceTvGames: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -163,14 +163,14 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         protobuf.getBody().setServerSteamid(client.getGameCoordinator().getClient().getSteamID().convertToUInt64());
         protobuf.getBody()
                 .setWatchServerSteamid(client.getGameCoordinator().getClient().getSteamID().convertToUInt64());
-        logger.trace(">>requestWatchGame: " + protobuf.getBody());
+        getLogger().trace(">>requestWatchGame: " + protobuf.getBody());
         send(protobuf);
     }
 
     public void requestMatchMakingStat() {
         ClientGCMsgProtobuf<CMsgDOTAMatchmakingStatsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAMatchmakingStatsRequest.class, EDOTAGCMsg.k_EMsgGCMatchmakingStatsRequest_VALUE);
-        logger.trace(">>requestMatchMakingStat: " + protobuf.getBody());
+        getLogger().trace(">>requestMatchMakingStat: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -178,7 +178,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgGCMatchDetailsRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCMatchDetailsRequest.class, EDOTAGCMsg.k_EMsgGCMatchDetailsRequest_VALUE);
         protobuf.getBody().setMatchId(matchId);
-        logger.trace(">>requestMatchDetails: " + protobuf.getBody());
+        getLogger().trace(">>requestMatchDetails: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
@@ -186,7 +186,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg match msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg match msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

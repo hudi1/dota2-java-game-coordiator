@@ -69,7 +69,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             handlePartyNew(callback.getData());
             break;
         default:
-            logger.debug("!!onSingleObjectNew with type: " + callback.getTypeId());
+            getLogger().debug("!!onSingleObjectNew with type: " + callback.getTypeId());
             break;
         }
     }
@@ -80,7 +80,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             handlePartyUpdated(callback.getData());
             break;
         default:
-            logger.debug("!!onSingleObjectUpdated with type: " + callback.getTypeId());
+            getLogger().debug("!!onSingleObjectUpdated with type: " + callback.getTypeId());
             break;
         }
     }
@@ -91,7 +91,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
             handlePartyRemoved(callback.getData());
             break;
         default:
-            logger.debug("!!onSingleObjectRemoved with type: " + callback.getTypeId());
+            getLogger().debug("!!onSingleObjectRemoved with type: " + callback.getTypeId());
             break;
         }
     }
@@ -103,43 +103,43 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
     public void handlePartyInvite(ByteString data) {
         try {
             CSODOTAPartyInvite partyInvite = CSODOTAPartyInvite.parseFrom(data);
-            logger.trace(">>handlePartyInvite: " + partyInvite);
+            getLogger().trace(">>handlePartyInvite: " + partyInvite);
             client.postCallback(new PartyInviteCallback(partyInvite));
         } catch (Exception e) {
-            logger.error("!!handlePartyInvite: ", e);
+            getLogger().error("!!handlePartyInvite: ", e);
         }
     }
 
     public void handlePartyNew(ByteString data) {
         try {
             CSODOTAParty party = CSODOTAParty.parseFrom(data);
-            logger.trace(">>handlePartyNew: " + party);
+            getLogger().trace(">>handlePartyNew: " + party);
             this.party = party;
             client.postCallback(new PartyNewCallback(party));
         } catch (Exception e) {
-            logger.error("!!handlePartyNew: ", e);
+            getLogger().error("!!handlePartyNew: ", e);
         }
     }
 
     public void handlePartyUpdated(ByteString data) {
         try {
             CSODOTAParty party = CSODOTAParty.parseFrom(data);
-            logger.trace(">>handlePartyUpdated: " + party);
+            getLogger().trace(">>handlePartyUpdated: " + party);
             this.party = party;
             client.postCallback(new PartyUpdatedCallback(party));
         } catch (Exception e) {
-            logger.error("!!handlePartyUpdated: ", e);
+            getLogger().error("!!handlePartyUpdated: ", e);
         }
     }
 
     public void handlePartyRemoved(ByteString data) {
         try {
             CSODOTAParty party = CSODOTAParty.parseFrom(data);
-            logger.trace(">>handlePartyRemoved: " + party);
+            getLogger().trace(">>handlePartyRemoved: " + party);
             this.party = null;
             client.postCallback(new PartyRemovedCallback(party));
         } catch (Exception e) {
-            logger.error("!!handlePartyRemoved: ", e);
+            getLogger().error("!!handlePartyRemoved: ", e);
         }
     }
 
@@ -147,7 +147,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgInvitationCreated.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgInvitationCreated.class, msg);
         if (party != null && party.getPartyId() == protobuf.getBody().getGroupId()) {
-            logger.trace(">>handleInvitationCreated: " + protobuf.getBody());
+            getLogger().trace(">>handleInvitationCreated: " + protobuf.getBody());
             client.postCallback(new PartyInvitationCreatedCallback(protobuf.getBody()));
         }
     }
@@ -159,7 +159,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
                 CMsgPartyInviteResponse.class, EGCBaseMsg.k_EMsgGCPartyInviteResponse_VALUE);
         protobuf.getBody().setPartyId(partyId);
         protobuf.getBody().setAccept(accept);
-        logger.trace(">>respondToPartyInvite: " + protobuf.getBody());
+        getLogger().trace(">>respondToPartyInvite: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -169,7 +169,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         }
         ClientGCMsgProtobuf<CMsgLeaveParty.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgLeaveParty.class,
                 EGCBaseMsg.k_EMsgGCLeaveParty_VALUE);
-        logger.trace(">>leaveParty: " + protobuf.getBody());
+        getLogger().trace(">>leaveParty: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -181,7 +181,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgDOTASetGroupLeader.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTASetGroupLeader.class, EDOTAGCMsg.k_EMsgClientToGCSetPartyLeader_VALUE);
         protobuf.getBody().setNewLeaderSteamid(steamId);
-        logger.trace(">>setPartyLeader: " + protobuf.getBody());
+        getLogger().trace(">>setPartyLeader: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -192,7 +192,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgDOTAPartyMemberSetCoach.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAPartyMemberSetCoach.class, EDOTAGCMsg.k_EMsgGCPartyMemberSetCoach_VALUE);
         protobuf.getBody().setWantsCoach(coach);
-        logger.trace(">>setPartyCoach: " + protobuf.getBody());
+        getLogger().trace(">>setPartyCoach: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -200,7 +200,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgInviteToParty.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgInviteToParty.class,
                 EGCBaseMsg.k_EMsgGCInviteToParty_VALUE);
         protobuf.getBody().setSteamId(steamId);
-        logger.trace(">>inviteToParty: " + protobuf.getBody());
+        getLogger().trace(">>inviteToParty: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -211,7 +211,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgKickFromParty.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgKickFromParty.class,
                 EGCBaseMsg.k_EMsgGCKickFromParty_VALUE);
         protobuf.getBody().setSteamId(steamId);
-        logger.trace(">>kickFromParty: " + protobuf.getBody());
+        getLogger().trace(">>kickFromParty: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -222,7 +222,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgPartyReadyCheckAcknowledge.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPartyReadyCheckAcknowledge.class, EDOTAGCMsg.k_EMsgPartyReadyCheckAcknowledge_VALUE);
         protobuf.getBody().setReadyStatus(EReadyCheckStatus.k_EReadyCheckStatus_Ready);
-        logger.trace(">>readyCheckAcknowledgeReady: " + protobuf.getBody());
+        getLogger().trace(">>readyCheckAcknowledgeReady: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -232,7 +232,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
         }
         ClientGCMsgProtobuf<CMsgPartyReadyCheckRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgPartyReadyCheckRequest.class, EDOTAGCMsg.k_EMsgPartyReadyCheckRequest_VALUE);
-        logger.trace(">>readyCheck: " + protobuf.getBody());
+        getLogger().trace(">>readyCheck: " + protobuf.getBody());
         send(protobuf);
     }
 
@@ -240,7 +240,7 @@ public class Dota2Party extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg party msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg party msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

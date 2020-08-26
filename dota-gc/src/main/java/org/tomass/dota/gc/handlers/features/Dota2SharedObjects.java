@@ -95,7 +95,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgSOCacheSubscribed.Builder> subs = new ClientGCMsgProtobuf<>(CMsgSOCacheSubscribed.class,
                 packetMsg);
 
-        logger.trace("handleSubscribed: " + subs.getBody().getOwnerSoid());
+        getLogger().trace("handleSubscribed: " + subs.getBody().getOwnerSoid());
         cache.put(subs.getBody().getOwnerSoid(), subs.getBody().getObjectsList());
         for (SubscribedType sub : subs.getBody().getObjectsList()) {
             for (ByteString data : sub.getObjectDataList()) {
@@ -108,7 +108,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgSOCacheUnsubscribed.Builder> unsubs = new ClientGCMsgProtobuf<>(
                 CMsgSOCacheUnsubscribed.class, packetMsg);
 
-        logger.trace("handleUnsubscibed: " + unsubs.getBody().getOwnerSoid());
+        getLogger().trace("handleUnsubscibed: " + unsubs.getBody().getOwnerSoid());
         List<SubscribedType> subs = cache.get(unsubs.getBody().getOwnerSoid());
         if (subs != null) {
             for (SubscribedType sub : subs) {
@@ -124,7 +124,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
                 packetMsg);
 
         for (CMsgSOCacheSubscribed subs : welcome.getBody().getOutofdateSubscribedCachesList()) {
-            logger.trace("handleClientWelcome: " + subs.getOwnerSoid());
+            getLogger().trace("handleClientWelcome: " + subs.getOwnerSoid());
             cache.put(subs.getOwnerSoid(), subs.getObjectsList());
             boolean lobbyExist = false;
             for (SubscribedType sub : subs.getObjectsList()) {
@@ -162,7 +162,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
 
     private void handlePopup(IPacketGCMsg data) {
         ClientGCMsgProtobuf<CMsgDOTAPopup.Builder> protobuf = new ClientGCMsgProtobuf<>(CMsgDOTAPopup.class, data);
-        logger.trace(">>handlePopup: " + protobuf.getBody() + "/" + data.getTargetJobID());
+        getLogger().trace(">>handlePopup: " + protobuf.getBody() + "/" + data.getTargetJobID());
         client.postCallback(new PopupCallback(data.getTargetJobID(), protobuf.getBody()));
     }
 
@@ -170,7 +170,7 @@ public class Dota2SharedObjects extends Dota2ClientGCMsgHandler {
     public void handleGCMsg(IPacketGCMsg packetGCMsg) {
         Consumer<IPacketGCMsg> dispatcher = dispatchMap.get(packetGCMsg.getMsgType());
         if (dispatcher != null) {
-            logger.trace(">>handleGCMsg shared object msg: " + packetGCMsg.getMsgType());
+            getLogger().trace(">>handleGCMsg shared object msg: " + packetGCMsg.getMsgType());
             dispatcher.accept(packetGCMsg);
         }
     }

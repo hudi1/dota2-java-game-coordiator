@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
@@ -29,8 +28,6 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
     private Map<EMsg, Consumer<IPacketMsg>> dispatchMap;
 
     private Map<Class<? extends ClientGCMsgHandler>, ClientGCMsgHandler> handlers = new HashMap<>();
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public Dota2SteamGameCoordinator() {
         dispatchMap = new HashMap<>();
@@ -67,20 +64,20 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         }
 
         try {
-            logger.trace(">>handleMsg msg: " + packetMsg.getMsgType());
+            getLogger().trace(">>handleMsg msg: " + packetMsg.getMsgType());
             Consumer<IPacketMsg> dispatcher = dispatchMap.get(packetMsg.getMsgType());
             if (dispatcher != null) {
                 dispatcher.accept(packetMsg);
             }
         } catch (Exception e) {
-            logger.error("!!handleMsg: ", e);
+            getLogger().error("!!handleMsg: ", e);
         }
     }
 
     public void handleFromGC(IPacketMsg packetMsg) {
         ClientMsgProtobuf<CMsgGCClient.Builder> msg = new ClientMsgProtobuf<>(CMsgGCClient.class, packetMsg);
         MessageCallback callback = new MessageCallback(msg.getBody());
-        logger.trace(">>handleGCMsg GC msg: " + callback.geteMsg());
+        getLogger().trace(">>handleGCMsg GC msg: " + callback.geteMsg());
         if (callback.getAppID() != this.appId) {
             return;
         }
@@ -92,7 +89,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
             try {
                 entry.getValue().handleGCMsg(packetMsg);
             } catch (Exception e) {
-                logger.warn("Unhandled exception from " + entry.getKey().getName() + " handlers", e);
+                getLogger().warn("Unhandled exception from " + entry.getKey().getName() + " handlers", e);
             }
         }
     }
@@ -142,6 +139,10 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
 
     public void send(IClientGCMsg msg) {
         send(msg, appId);
+    }
+
+    public Logger getLogger() {
+        return getClient().getLogger();
     }
 
 }
