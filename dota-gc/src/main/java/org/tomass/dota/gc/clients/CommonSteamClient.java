@@ -160,7 +160,7 @@ public class CommonSteamClient extends SteamClient {
         if (callback.getResult() != EResult.OK) {
             logger.info("Unable to logon to Steam: " + callback.getResult() + " / " + callback.getExtendedResult());
             disconnect();
-            if (callback.getResult() == EResult.ServiceUnavailable) {
+            if (callback.getResult() == EResult.ServiceUnavailable || callback.getResult() == EResult.TryAnotherCM) {
                 try {
                     Thread.sleep(5000L);
                 } catch (InterruptedException e) {
