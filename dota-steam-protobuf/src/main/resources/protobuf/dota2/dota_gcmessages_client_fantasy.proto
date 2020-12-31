@@ -1,8 +1,8 @@
 import "dota_shared_enums.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum DOTA_2013PassportSelectionIndices {
 	PP13_SEL_ALLSTAR_PLAYER_0 = 0;
@@ -144,7 +144,7 @@ message CMsgDOTAPlayerInfoList {
 message CMsgDOTADPCProfileInfo {
 	message PredictionInfo {
 		optional uint32 percent = 1;
-		optional uint32 shard_winnings = 2;
+		optional int32 shard_winnings = 2;
 	}
 
 	message FantasyInfo {
@@ -919,8 +919,6 @@ message CMsgDOTAFantasyDPCLeagueStatus {
 		optional uint32 start_timestamp = 3;
 		optional uint32 end_timestamp = 4;
 		repeated uint32 day_timestamps = 5;
-		optional bool is_qualifier = 6;
-		optional .ELeagueFantasyPhase phase = 7 [default = LEAGUE_FANTASY_PHASE_UNSET];
 		optional .CMsgDOTAFantasyDPCLeagueStatus.ERosterStatus status = 8 [default = UNSET];
 	}
 
@@ -933,4 +931,3 @@ message CMsgDOTAFantasyDPCLeagueStatus {
 
 	repeated .CMsgDOTAFantasyDPCLeagueStatus.LeagueInfo league_infos = 1;
 }
-

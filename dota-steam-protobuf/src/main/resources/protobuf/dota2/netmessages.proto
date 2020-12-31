@@ -1,7 +1,7 @@
 import "networkbasetypes.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum CLC_Messages {
 	clc_ClientInfo = 20;
@@ -103,7 +103,6 @@ message CCLCMsg_ClientInfo {
 	optional fixed32 send_table_crc = 1;
 	optional uint32 server_count = 2;
 	optional bool is_hltv = 3;
-	optional bool is_replay = 4;
 	optional uint32 friends_id = 5;
 	optional string friends_name = 6;
 }
@@ -191,7 +190,6 @@ message CSVCMsg_ServerInfo {
 	optional int32 server_count = 2;
 	optional bool is_dedicated = 3;
 	optional bool is_hltv = 4;
-	optional bool is_replay = 5;
 	optional int32 c_os = 6;
 	optional int32 max_clients = 10;
 	optional int32 max_classes = 11;
@@ -336,6 +334,14 @@ message CSVCMsg_GameEventList {
 }
 
 message CSVCMsg_PacketEntities {
+	message command_queue_info_t {
+		optional uint32 commands_queued = 1;
+		optional uint32 command_queue_desired_size = 2;
+		optional uint32 starved_command_ticks = 3;
+		optional float time_dilation_percent = 4;
+		optional uint32 discarded_command_ticks = 5;
+	}
+
 	optional int32 max_entries = 1;
 	optional int32 updated_entries = 2;
 	optional bool is_delta = 3;
@@ -347,6 +353,9 @@ message CSVCMsg_PacketEntities {
 	optional uint32 active_spawngroup_handle = 9;
 	optional uint32 max_spawngroup_creationsequence = 10;
 	optional uint32 last_cmd_number = 11;
+	optional uint32 server_tick = 12;
+	optional bytes serialized_entities = 13;
+	optional .CSVCMsg_PacketEntities.command_queue_info_t command_queue_info = 14;
 }
 
 message CSVCMsg_TempEntities {
@@ -550,4 +559,3 @@ message CMsgServerNetworkStats {
 	optional uint64 total_packets_out = 29;
 	repeated .CMsgServerNetworkStats.Player players = 30;
 }
-

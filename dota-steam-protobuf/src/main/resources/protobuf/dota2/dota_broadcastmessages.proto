@@ -1,6 +1,6 @@
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EDotaBroadcastMessages {
 	DOTA_BM_LANLobbyRequest = 1;
@@ -31,4 +31,3 @@ message CDOTABroadcastMsg_LANLobbyReply {
 	optional string name = 8;
 	optional uint32 players = 9;
 }
-

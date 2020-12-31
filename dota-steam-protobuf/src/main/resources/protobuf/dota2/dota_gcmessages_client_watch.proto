@@ -1,8 +1,8 @@
 import "dota_gcmessages_common.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 message CSourceTVGameSmall {
 	message Player {
@@ -40,6 +40,7 @@ message CSourceTVGameSmall {
 	optional uint32 weekend_tourney_division = 27;
 	optional uint32 weekend_tourney_skill_level = 28;
 	optional uint32 weekend_tourney_bracket_round = 29;
+	optional uint32 custom_game_difficulty = 32;
 }
 
 message CMsgClientToGCFindTopSourceTVGames {
@@ -226,4 +227,3 @@ message CMsgDOTASeries {
 	repeated .CMsgDOTAMatchMinimal match_minimal = 5;
 	optional .CMsgDOTASeries.LiveGame live_game = 6;
 }
-

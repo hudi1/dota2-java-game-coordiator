@@ -1,5 +1,5 @@
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EDemoCommands {
 	DEM_Error = -1;
@@ -148,4 +148,3 @@ message CDemoUserCmd {
 message CDemoSpawnGroups {
 	repeated bytes msgs = 3;
 }
-

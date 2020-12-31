@@ -1,9 +1,9 @@
 import "dota_commonmessages.proto";
 import "dota_shared_enums.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EDotaClientMessages {
 	DOTA_CM_MapLine = 301;
@@ -82,6 +82,17 @@ enum EDotaClientMessages {
 	DOTA_CM_SprayWheel = 377;
 	DOTA_CM_TipAlert = 378;
 	DOTA_CM_EmptyTeleportAlert = 379;
+	DOTA_CM_RadarAlert = 380;
+	DOTA_CM_TalentTreeAlert = 381;
+	DOTA_CM_SetCavernMapVariant = 382;
+	DOTA_CM_PauseGameOrder = 383;
+	DOTA_CM_VersusScene_PlayerBehavior = 384;
+	DOTA_CM_PlayerBounty = 385;
+	DOTA_CM_PlayerBountyCancel = 386;
+	DOTA_CM_PingConfirm = 387;
+	DOTA_CM_EmptyItemSlotAlert = 388;
+	DOTA_CM_AddMarker = 389;
+	DOTA_CM_AghsStatusAlert = 390;
 }
 
 message CDOTAClientMsg_MapPing {
@@ -94,7 +105,7 @@ message CDOTAClientMsg_ItemAlert {
 
 message CDOTAClientMsg_EnemyItemAlert {
 	optional uint32 item_entindex = 1;
-	optional uint32 rune_type = 2;
+	optional int32 rune_type = 2 [default = -1];
 	optional int32 item_level = 3 [default = -1];
 	optional int32 primary_charges = 4 [default = -1];
 	optional int32 secondary_charges = 5 [default = -1];
@@ -116,6 +127,10 @@ message CDOTAClientMsg_HPManaAlert {
 }
 
 message CDOTAClientMsg_GlyphAlert {
+	optional bool negative = 1;
+}
+
+message CDOTAClientMsg_RadarAlert {
 	optional bool negative = 1;
 }
 
@@ -191,6 +206,7 @@ message CDOTAClientMsg_RequestGraphUpdate {
 message CDOTAClientMsg_ChatWheel {
 	optional uint32 chat_message_id = 1;
 	optional uint32 param_hero_id = 2;
+	optional uint32 emoticon_id = 3;
 }
 
 message CDOTAClientMsg_SendStatPopup {
@@ -207,8 +223,8 @@ message CDOTAClientMsg_BeginLastHitChallenge {
 }
 
 message CDOTAClientMsg_UpdateQuickBuyItem {
-	optional int32 item_ability_id = 1;
-	optional bool purchasable = 2;
+	optional int32 item_ability_id = 1 [default = -1];
+	optional bool purchasable = 2 [default = false];
 }
 
 message CDOTAClientMsg_UpdateQuickBuy {
@@ -307,6 +323,10 @@ message CDOTAClientMsg_RankWager {
 	optional bool announce_wager = 1;
 }
 
+message CDOTAClientMsg_PlayerBounty {
+	optional uint32 player_id = 1;
+}
+
 message CDOTAClientMsg_EventPointsTip {
 	optional uint32 recipient_player_id = 1;
 }
@@ -318,6 +338,13 @@ message CDOTAClientMsg_ExecuteOrders {
 message CDOTAClientMsg_XPAlert {
 	optional uint32 target_entindex = 1;
 	optional uint32 damage_taken = 2;
+}
+
+message CDOTAClientMsg_TalentTreeAlert {
+	optional uint32 target_entindex = 1;
+	optional int32 ability_id = 2;
+	optional int32 slot = 3;
+	optional bool learned = 4;
 }
 
 message CDOTAClientMsg_KillcamDamageTaken {
@@ -398,6 +425,7 @@ message CDOTAClientMsg_RequestBulkCombatLog {
 
 message CDOTAClientMsg_AbilityDraftRequestAbility {
 	optional uint32 requested_ability_id = 1;
+	optional bool ctrl_is_down = 2;
 }
 
 message CDOTAClientMsg_GuideSelectOption {
@@ -422,6 +450,12 @@ message CDOTAClientMsg_SalutePlayer {
 	optional int32 event_id = 2;
 }
 
+message CDOTAClientMsg_PingConfirm {
+	optional int32 ping_owner_player_id = 1;
+	optional int32 ping_confirming_player_id = 2;
+	optional bool confirming = 3;
+}
+
 message CDOTAClientMsg_TipAlert {
 	optional string tip_text = 1;
 }
@@ -430,3 +464,36 @@ message CDOTAClientMsg_EmptyTeleportAlert {
 	optional int32 target_entindex = 1;
 }
 
+message CDOTAClientMsg_SetCavernMapVariant {
+	optional uint32 map_variant = 1;
+}
+
+message CDOTAClientMsg_PauseGameOrder {
+	optional int32 order_id = 1;
+	optional int32 data = 2;
+}
+
+message CDOTAClientMsg_VersusScene_PlayerBehavior {
+	optional .EDOTAVersusScenePlayerBehavior behavior = 1 [default = VS_PLAYER_BEHAVIOR_PLAY_ACTIVITY];
+	optional .VersusScene_PlayActivity play_activity = 2;
+	optional .VersusScene_ChatWheel chat_wheel = 3;
+	optional .VersusScene_PlaybackRate playback_rate = 4;
+}
+
+message CDOTAClientMsg_EmptyItemSlotAlert {
+	optional int32 target_entindex = 1;
+	optional int32 slot_index = 2;
+}
+
+message CDOTAClientMsg_AddMarker {
+	optional int32 target_player_id = 1;
+	optional .EOverwatchReportReason reason = 2 [default = k_EOverwatchReportReason_Unknown];
+	optional uint32 seconds_ago = 4;
+}
+
+message CDOTAClientMsg_AghsStatusAlert {
+	optional uint32 source_player_id = 1;
+	optional uint32 target_player_id = 2;
+	optional uint32 target_entindex = 3;
+	optional uint32 alert_type = 4;
+}

@@ -1,7 +1,7 @@
 package org.tomass.dota.gc.handlers;
 
-import org.slf4j.Logger;
 import org.tomass.dota.gc.clients.Dota2Client;
+import org.tomass.dota.gc.logger.SteamClientLogger;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
 
 import in.dragonbra.javasteam.base.IClientGCMsg;
@@ -57,7 +57,7 @@ public abstract class Dota2ClientGCMsgHandler implements ClientGCMsgHandler {
         return client.registerAndWait(key, timeout);
     }
 
-    public Logger getLogger() {
+    public SteamClientLogger getLogger() {
         return client.getLogger();
     }
 

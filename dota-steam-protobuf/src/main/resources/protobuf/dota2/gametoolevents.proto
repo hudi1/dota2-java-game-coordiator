@@ -1,7 +1,7 @@
 import "networkbasetypes.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 message ChangeMapToolEvent {
 	optional string mapname = 1;
@@ -77,4 +77,3 @@ message ToolEvent_SFMRecordingStateChanged {
 message ToolEvent_SFMToolActiveStateChanged {
 	optional bool isactive = 1;
 }
-

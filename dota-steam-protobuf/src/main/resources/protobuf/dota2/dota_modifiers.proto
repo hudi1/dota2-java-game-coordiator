@@ -1,8 +1,8 @@
 import "networkbasetypes.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum DOTA_MODIFIER_ENTRY_TYPE {
 	DOTA_MODIFIER_ENTRY_TYPE_ACTIVE = 1;
@@ -43,10 +43,10 @@ message CDOTAModifierBuffTableEntry {
 	optional string player_ids = 31;
 	optional string lua_name = 32;
 	optional int32 attack_speed = 33;
+	optional int32 aura_owner = 34;
 }
 
 message CDOTALuaModifierEntry {
 	required int32 modifier_type = 1;
 	required string modifier_filename = 2;
 }
-

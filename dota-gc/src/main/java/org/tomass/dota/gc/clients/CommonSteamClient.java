@@ -17,9 +17,9 @@ import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
 import org.tomass.dota.gc.config.SteamClientConfig;
+import org.tomass.dota.gc.logger.SteamClientLogger;
 
 import in.dragonbra.javasteam.base.IClientMsg;
 import in.dragonbra.javasteam.enums.EFriendRelationship;
@@ -49,7 +49,7 @@ public class CommonSteamClient extends SteamClient {
 
     public static final Long DEFAULT_TIMEOUT = 10l;
 
-    protected final Logger logger;
+    protected final SteamClientLogger logger;
 
     protected SteamClientConfig config;
 
@@ -71,15 +71,13 @@ public class CommonSteamClient extends SteamClient {
 
     private Map<Object, CompletableFuture<Object>> subscribers = new HashMap<>();
 
+    private Marker marker;
+
     public CommonSteamClient(SteamClientConfig config) {
         super(config.getSteamWebApi() != null ? SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi()))
                 : SteamConfiguration.createDefault());
         this.config = config;
-        if (config.isSeparateLogger()) {
-            this.logger = LoggerFactory.getLogger(config.getUser());
-        } else {
-            this.logger = LoggerFactory.getLogger(getClass());
-        }
+        this.logger = new SteamClientLogger(config.getUser(), config.isSeparateLogger());
         init();
     }
 
@@ -160,7 +158,8 @@ public class CommonSteamClient extends SteamClient {
         if (callback.getResult() != EResult.OK) {
             logger.info("Unable to logon to Steam: " + callback.getResult() + " / " + callback.getExtendedResult());
             disconnect();
-            if (callback.getResult() == EResult.ServiceUnavailable || callback.getResult() == EResult.TryAnotherCM) {
+            if (EResult.ServiceUnavailable.equals(callback.getResult())
+                    || EResult.TryAnotherCM.equals(callback.getResult())) {
                 try {
                     Thread.sleep(5000L);
                 } catch (InterruptedException e) {
@@ -375,7 +374,7 @@ public class CommonSteamClient extends SteamClient {
         this.extendedResult = extendedResult;
     }
 
-    public Logger getLogger() {
+    public SteamClientLogger getLogger() {
         return logger;
     }
 

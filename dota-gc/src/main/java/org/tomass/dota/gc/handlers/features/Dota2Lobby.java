@@ -249,8 +249,12 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
                 CMsgPracticeLobbyCreate.class, EDOTAGCMsg.k_EMsgGCPracticeLobbyCreate_VALUE);
         protobuf.getBody().setLobbyDetails(detail);
 
-        getLogger().trace(">>createPracticeLobby: " + protobuf.getBody());
-        return sendJobAndWait(protobuf, 60l);
+        try {
+            getLogger().trace(">>createPracticeLobby: " + protobuf.getBody());
+            return sendJobAndWait(protobuf, 60l);
+        } finally {
+            getLogger().trace("<<createPracticeLobby: " + protobuf.getBody());
+        }
     }
 
     public void configPracticeLobby(CMsgPracticeLobbySetDetails options) {

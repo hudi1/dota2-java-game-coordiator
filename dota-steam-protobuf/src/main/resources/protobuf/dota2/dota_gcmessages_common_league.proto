@@ -1,8 +1,8 @@
 import "dota_shared_enums.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum ELeagueNodeGroupType {
 	INVALID_GROUP_TYPE = 0;
@@ -82,6 +82,11 @@ message CMsgDOTALeagueNodeGroup {
 	optional .ELeagueRegion region = 19 [default = LEAGUE_REGION_UNSET];
 	optional uint32 start_time = 20;
 	optional uint32 end_time = 21;
+	optional uint32 secondary_advancing_node_group_id = 22;
+	optional uint32 secondary_advancing_team_count = 23;
+	optional uint32 tertiary_advancing_node_group_id = 24;
+	optional uint32 tertiary_advancing_team_count = 25;
+	optional uint32 elimination_dpc_points = 26;
 	repeated .CMsgDOTALeagueNodeGroup.TeamStanding team_standings = 15;
 	repeated .CMsgDOTALeagueNode nodes = 16;
 	repeated .CMsgDOTALeagueNodeGroup node_groups = 17;
@@ -258,3 +263,55 @@ message CMsgDOTALeagueNodeResults {
 	repeated .CMsgDOTALeagueNodeResults.Result node_results = 1;
 }
 
+message CMsgDOTADPCLeagueResults {
+	message Result {
+		optional uint32 standing = 1;
+		optional uint32 team_id = 2;
+		optional string team_name = 3;
+		optional uint64 team_logo = 4;
+		optional string team_logo_url = 5;
+		optional uint32 points = 6;
+		optional uint32 earnings = 7;
+		optional uint32 timestamp = 8;
+		optional .ELeaguePhase phase = 9 [default = LEAGUE_PHASE_UNSET];
+	}
+
+	repeated .CMsgDOTADPCLeagueResults.Result results = 1;
+	repeated uint32 points = 2;
+	repeated uint32 dollars = 3;
+}
+
+message CMsgDOTADPCTeamResults {
+	message Result {
+		optional uint32 league_id = 1;
+		optional uint32 standing = 2;
+		optional uint32 points = 3;
+		optional uint32 earnings = 4;
+		optional uint32 timestamp = 5;
+	}
+
+	repeated .CMsgDOTADPCTeamResults.Result results = 1;
+}
+
+message CMsgDOTADPCSeasonResults {
+	message TeamLeagueResult {
+		optional uint32 timestamp = 1;
+		optional uint32 league_id = 2;
+		optional uint32 standing = 3;
+		optional uint32 points = 4;
+		optional uint32 earnings = 5;
+		optional uint32 audit_action = 6;
+	}
+
+	message TeamResult {
+		optional uint32 team_id = 1;
+		optional string team_name = 2;
+		optional uint64 team_logo = 3;
+		optional string team_logo_url = 4;
+		optional uint32 total_points = 5;
+		optional uint32 total_earnings = 6;
+		repeated .CMsgDOTADPCSeasonResults.TeamLeagueResult league_results = 7;
+	}
+
+	repeated .CMsgDOTADPCSeasonResults.TeamResult results = 1;
+}

@@ -1,6 +1,7 @@
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+
+option java_package = "org.tomass.protobuf.dota";
 
 enum EBaseClientMessages {
 	CM_CustomGameEvent = 280;
@@ -50,4 +51,3 @@ message CClientMsg_WorldUIControllerHasPanelChangedEvent {
 message CClientMsg_RotateAnchor {
 	optional float angle = 1;
 }
-

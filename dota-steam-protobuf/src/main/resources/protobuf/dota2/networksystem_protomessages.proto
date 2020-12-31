@@ -1,5 +1,5 @@
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 message NetMessageSplitscreenUserChanged {
 	optional uint32 slot = 1;
@@ -18,4 +18,3 @@ message NetMessagePacketStart {
 
 message NetMessagePacketEnd {
 }
-

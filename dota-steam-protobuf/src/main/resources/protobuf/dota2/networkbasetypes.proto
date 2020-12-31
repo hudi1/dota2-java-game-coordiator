@@ -1,7 +1,18 @@
 import "network_connection.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
+
+enum SignonState_t {
+	SIGNONSTATE_NONE = 0;
+	SIGNONSTATE_CHALLENGE = 1;
+	SIGNONSTATE_CONNECTED = 2;
+	SIGNONSTATE_NEW = 3;
+	SIGNONSTATE_PRESPAWN = 4;
+	SIGNONSTATE_SPAWN = 5;
+	SIGNONSTATE_FULL = 6;
+	SIGNONSTATE_CHANGELEVEL = 7;
+}
 
 enum NET_Messages {
 	net_NOP = 0;
@@ -46,6 +57,13 @@ message CMsgQAngle {
 	optional float z = 3;
 }
 
+message CMsgRGBA {
+	optional int32 r = 1;
+	optional int32 g = 2;
+	optional int32 b = 3;
+	optional int32 a = 4;
+}
+
 message CMsgPlayerInfo {
 	optional string name = 1;
 	optional fixed64 xuid = 2;
@@ -53,6 +71,10 @@ message CMsgPlayerInfo {
 	optional fixed64 steamid = 4;
 	optional bool fakeplayer = 5;
 	optional bool ishltv = 6;
+}
+
+message CEntityMsg {
+	optional uint32 target_entity = 1;
 }
 
 message CMsg_CVars {
@@ -83,6 +105,7 @@ message CNETMsg_Tick {
 	optional uint32 host_computationtime_std_deviation = 5;
 	optional uint32 host_framestarttime_std_deviation = 6;
 	optional uint32 host_loss = 7;
+	optional uint32 host_unfiltered_frametime = 8;
 }
 
 message CNETMsg_StringCmd {
@@ -94,7 +117,7 @@ message CNETMsg_SetConVar {
 }
 
 message CNETMsg_SignonState {
-	optional uint32 signon_state = 1;
+	optional .SignonState_t signon_state = 1 [default = SIGNONSTATE_NONE];
 	optional uint32 spawn_count = 2;
 	optional uint32 num_server_players = 3;
 	repeated string players_networkids = 4;
@@ -161,6 +184,7 @@ message CNETMsg_SpawnGroup_Load {
 	optional uint32 creationsequence = 16;
 	optional string savegamefilename = 17;
 	optional uint32 spawngroupparenthandle = 18;
+	optional bool leveltransition = 19;
 }
 
 message CNETMsg_SpawnGroup_ManifestUpdate {
@@ -201,8 +225,8 @@ message CSVCMsg_GameSessionConfiguration {
 	optional string server_ip_address = 13;
 	optional bytes data = 14;
 	optional bool is_localonly = 15;
+	optional bool no_steam_server = 19;
 	optional bool is_transition = 16;
 	optional string previouslevel = 17;
 	optional string landmarkname = 18;
 }
-

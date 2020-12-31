@@ -3,11 +3,11 @@ package org.tomass.dota.steam.handlers;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
 import org.tomass.dota.gc.clients.Dota2Client;
 import org.tomass.dota.gc.handlers.ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.Dota2ClientGCMsgHandler;
 import org.tomass.dota.gc.handlers.callbacks.ClientRichPresenceInfoCallback;
+import org.tomass.dota.gc.logger.SteamClientLogger;
 
 import in.dragonbra.javasteam.base.ClientMsgProtobuf;
 import in.dragonbra.javasteam.base.IClientGCMsg;
@@ -141,7 +141,7 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         send(msg, appId);
     }
 
-    public Logger getLogger() {
+    public SteamClientLogger getLogger() {
         return getClient().getLogger();
     }
 

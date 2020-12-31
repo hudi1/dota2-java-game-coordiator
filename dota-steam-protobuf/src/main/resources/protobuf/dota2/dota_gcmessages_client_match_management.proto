@@ -4,9 +4,9 @@ import "dota_client_enums.proto";
 import "base_gcmessages.proto";
 import "dota_gcmessages_common_match_management.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EStartFindingMatchResult {
 	k_EStartFindingMatchResult_Invalid = 0;
@@ -21,7 +21,7 @@ enum EStartFindingMatchResult {
 	k_EStartFindingMatchResult_CompetitiveNoLowPriority = 106;
 	k_EStartFindingMatchResult_CompetitiveNotUnlocked = 107;
 	k_EStartFindingMatchResult_GameModeNotUnlocked = 108;
-	k_EStartFindingMatchResult_CompetitiveNotEnoughSkillData = 109;
+	k_EStartFindingMatchResult_CompetitiveNotEnoughPlayTime = 109;
 	k_EStartFindingMatchResult_MissingInitialSkill = 110;
 	k_EStartFindingMatchResult_CompetitiveRankSpreadTooLarge = 111;
 	k_EStartFindingMatchResult_MemberAlreadyInLobby = 112;
@@ -35,6 +35,16 @@ enum EStartFindingMatchResult {
 	k_EStartFindingMatchResult_WeekendTourneyRecentParticipation = 120;
 	k_EStartFindingMatchResult_MemberMissingAnchoredPhoneNumber = 121;
 	k_EStartFindingMatchResult_NotMemberOfClan = 122;
+	k_EStartFindingMatchResult_CoachesChallengeBadPartySize = 123;
+	k_EStartFindingMatchResult_CoachesChallengeRequirementsNotMet = 124;
+	k_EStartFindingMatchResult_InvalidRoleSelections = 125;
+	k_EStartFindingMatchResult_PhoneNumberDiscrepancy = 126;
+	k_EStartFindingMatchResult_NoQueuePoints = 127;
+	k_EStartFindingMatchResult_MemberMissingGauntletFlag = 128;
+	k_EStartFindingMatchResult_MemberGauntletTooRecent = 129;
+	k_EStartFindingMatchResult_DifficultyNotUnlocked = 130;
+	k_EStartFindingMatchResult_CoachesNotAllowedInParty = 131;
+	k_EStartFindingMatchResult_MatchmakingBusy = 132;
 }
 
 message CMsgStartFindingMatch {
@@ -55,6 +65,9 @@ message CMsgStartFindingMatch {
 	optional uint32 steam_clan_account_id = 16;
 	optional bool is_challenge_match = 17;
 	optional uint32 lane_selection_flags = 18;
+	optional bool high_priority_disabled = 19;
+	optional bool disable_experimental_gameplay = 20;
+	optional uint32 custom_game_difficulty_mask = 21;
 }
 
 message CMsgStartFindingMatchResult {
@@ -63,9 +76,11 @@ message CMsgStartFindingMatchResult {
 	optional string error_token = 3;
 	optional string debug_message = 4;
 	repeated fixed64 responsible_party_members = 5;
+	optional uint32 result_metadata = 6;
 }
 
 message CMsgStopFindingMatch {
+	optional bool accept_cooldown = 1;
 }
 
 message CMsgPartyBuilderOptions {
@@ -133,6 +148,7 @@ message CMsgPracticeLobbySetDetails {
 	optional bool custom_game_penalties = 47;
 	optional string lan_host_ping_location = 48;
 	optional uint32 league_node_id = 49;
+	repeated uint32 requested_hero_ids = 50;
 }
 
 message CMsgPracticeLobbyCreate {
@@ -212,8 +228,6 @@ message CMsgPracticeLobbyListResponseEntry {
 	repeated .CMsgPracticeLobbyListResponseEntry.CLobbyMember members = 5;
 	optional bool requires_pass_key = 6;
 	optional uint32 leader_account_id = 7;
-	optional uint32 guild_id = 8;
-	optional uint64 guild_logo = 9;
 	optional string name = 10;
 	optional string custom_game_mode = 11;
 	optional .DOTA_GameMode game_mode = 12 [default = DOTA_GAMEMODE_NONE];
@@ -256,14 +270,6 @@ message CMsgFriendPracticeLobbyListRequest {
 }
 
 message CMsgFriendPracticeLobbyListResponse {
-	repeated .CMsgPracticeLobbyListResponseEntry lobbies = 1;
-}
-
-message CMsgGuildmatePracticeLobbyListRequest {
-	repeated uint32 guilds = 1;
-}
-
-message CMsgGuildmatePracticeLobbyListResponse {
 	repeated .CMsgPracticeLobbyListResponseEntry lobbies = 1;
 }
 
@@ -454,5 +460,13 @@ message CMsgGCToClientRequestLaneSelection {
 
 message CMsgGCToClientRequestLaneSelectionResponse {
 	optional uint32 lane_selection_flags = 1;
+	optional bool high_priority_disabled = 2;
 }
 
+message CMsgGCToClientRequestMMInfo {
+}
+
+message CMsgClientToGCMMInfo {
+	optional uint32 lane_selection_flags = 1;
+	optional bool high_priority_disabled = 2;
+}

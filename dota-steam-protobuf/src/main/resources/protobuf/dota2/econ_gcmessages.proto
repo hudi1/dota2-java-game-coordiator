@@ -1,9 +1,9 @@
 import "steammessages.proto";
 import "econ_shared_enums.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EGCItemMsg {
 	k_EMsgGCBase = 1000;
@@ -187,6 +187,12 @@ enum EGCItemMsg {
 	k_EMsgGCRequestCrateEscalationLevel = 2602;
 	k_EMsgGCRequestCrateEscalationLevelResponse = 2603;
 	k_EMsgGCToGCUpdateSubscriptionItems = 2604;
+	k_EMsgGCToGCSelfPing = 2605;
+	k_EMsgGCToGCGetInfuxIntervalStats = 2606;
+	k_EMsgGCToGCGetInfuxIntervalStatsResponse = 2607;
+	k_EMsgGCToGCPurchaseSucceeded = 2608;
+	k_EMsgClientToGCGetLimitedItemPurchaseQuantity = 2609;
+	k_EMsgClientToGCGetLimitedItemPurchaseQuantityResponse = 2610;
 }
 
 enum EItemPurgatoryResponse_Finalize {
@@ -775,6 +781,13 @@ message CProtoItemSocket_Strange {
 	optional uint32 strange_value = 3;
 }
 
+message CProtoItemSocket_Strange_DESERIALIZE_FROM_STRING_ONLY {
+	optional .CProtoItemSocket socket = 1;
+	optional uint32 strange_type = 2;
+	optional uint32 strange_value = 3;
+	optional uint32 ability_effect = 4;
+}
+
 message CProtoItemSocket_Spectator {
 	optional .CProtoItemSocket socket = 1;
 	optional uint32 games_viewed = 2;
@@ -928,6 +941,7 @@ message CMsgProcessTransactionOrder {
 message CMsgGCToGCStoreProcessCDKeyTransaction {
 	optional .CMsgProcessTransactionOrder order = 1;
 	optional uint32 reason_code = 2;
+	optional uint32 partner = 3;
 }
 
 message CMsgGCToGCStoreProcessCDKeyTransactionResponse {
@@ -959,6 +973,7 @@ message CMsgGCToGCConsoleOutput {
 	optional string initiator = 1;
 	optional uint32 sending_gc = 2;
 	repeated .CMsgGCToGCConsoleOutput.OutputLine msgs = 3;
+	optional bool is_last_for_source_job = 4;
 }
 
 message CMsgItemAges {
@@ -985,6 +1000,7 @@ message CMsgGCToGCClientServerVersionsUpdated {
 	optional uint32 client_active_version = 2;
 	optional uint32 server_active_version = 3;
 	optional uint32 server_deployed_version = 4;
+	optional uint32 what_changed = 5;
 }
 
 message CMsgGCToGCBroadcastMessageFromSub {
@@ -1033,3 +1049,46 @@ message CMsgGCToGCUpdateSubscriptionItems {
 	optional bool always_notify = 2;
 }
 
+message CMsgGCToGCSelfPing {
+	optional uint32 sample_id = 1;
+}
+
+message CMsgGCToGCGetInfuxIntervalStats {
+}
+
+message CMsgGCToGCGetInfuxIntervalStatsResponse {
+	repeated fixed32 stat_ids = 1 [packed = true];
+	repeated uint64 stat_total = 2 [packed = true];
+	repeated uint32 stat_samples = 3 [packed = true];
+	repeated uint32 stat_max = 4 [packed = true];
+	optional uint32 sample_duration_ms = 5;
+}
+
+message CMsgGCToGCPurchaseSucceeded {
+}
+
+message CExtraMsgBlock {
+	optional uint32 msg_type = 1;
+	optional bytes contents = 2;
+	optional uint64 msg_key = 3;
+	optional bool is_compressed = 4;
+}
+
+message CMsgClientToGCGetLimitedItemPurchaseQuantity {
+	optional uint32 item_def = 1;
+}
+
+message CMsgClientToGCGetLimitedItemPurchaseQuantityResponse {
+	enum EResponse {
+		k_eInternalError = 0;
+		k_eSuccess = 1;
+		k_eTooBusy = 2;
+		k_eDisabled = 3;
+		k_eTimeout = 4;
+		k_eInvalidItemDef = 5;
+		k_eItemDefNotLimited = 6;
+	}
+
+	optional .CMsgClientToGCGetLimitedItemPurchaseQuantityResponse.EResponse result = 1 [default = k_eInternalError];
+	optional uint32 quantity_purchased = 2;
+}

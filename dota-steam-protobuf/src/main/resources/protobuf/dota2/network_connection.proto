@@ -1,7 +1,7 @@
 import "google/protobuf/descriptor.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 extend .google.protobuf.EnumValueOptions {
 	optional string network_connection_token = 50500;
@@ -116,4 +116,3 @@ enum ENetworkDisconnectionReason {
 	NETWORK_DISCONNECT_REJECT_SERVERCDKEYAUTHINVALID = 148 [(network_connection_token) = "#GameUI_ServerCDKeyAuthInvalid"];
 	NETWORK_DISCONNECT_REJECT_BANNED = 149 [(network_connection_token) = "#GameUI_ServerRejectBanned"];
 }
-

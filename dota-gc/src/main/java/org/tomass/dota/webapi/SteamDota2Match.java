@@ -105,21 +105,4 @@ public class SteamDota2Match {
         }
         return null;
     }
-
-    public static void main(String[] args) {
-        // League league = getLeagueMatchHistory(
-        // SteamConfiguration.create(c -> c.withWebAPIKey("0C04A32A96BEC7F7C1BA4A6B45FC3435")), 11660);
-        //
-        // List<TeamInfo> teams = league.getTeams().values().stream().sorted(Comparator.comparingInt(TeamInfo::getWins))
-        // .collect(Collectors.toList());
-        // for (TeamInfo teamInfo : teams) {
-        // System.out.println(teamInfo.getName() + " " + teamInfo.getWins());
-        // }
-
-        TeamInfo team = getTeam(SteamConfiguration.create(c -> c.withWebAPIKey("0C04A32A96BEC7F7C1BA4A6B45FC3435")),
-                7958982);
-        System.out.println(team);
-
-    }
-
 }

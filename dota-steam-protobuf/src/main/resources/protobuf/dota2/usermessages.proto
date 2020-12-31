@@ -1,8 +1,8 @@
 import "networkbasetypes.proto";
 
-option java_package = "org.tomass.protobuf.dota";
 option optimize_for = SPEED;
 option cc_generic_services = false;
+option java_package = "org.tomass.protobuf.dota";
 
 enum EBaseUserMessages {
 	UM_AchievementEvent = 101;
@@ -43,9 +43,9 @@ enum EBaseUserMessages {
 	UM_ParticleManager = 145;
 	UM_HudError = 146;
 	UM_CustomGameEvent = 148;
-	UM_HandHapticPulse = 149;
-	UM_AnimGraphUpdate = 150;
-	UM_HandHapticPulsePrecise = 151;
+	UM_AnimGraphUpdate = 149;
+	UM_HapticsManagerPulse = 150;
+	UM_HapticsManagerEffect = 151;
 	UM_MAX_BASE = 200;
 }
 
@@ -85,6 +85,11 @@ enum PARTICLE_MESSAGE {
 	GAME_PARTICLE_MANAGER_EVENT_SET_FOW_PROPERTIES = 15;
 	GAME_PARTICLE_MANAGER_EVENT_SET_TEXT = 16;
 	GAME_PARTICLE_MANAGER_EVENT_SET_SHOULD_CHECK_FOW = 17;
+	GAME_PARTICLE_MANAGER_EVENT_SET_CONTROL_POINT_MODEL = 18;
+	GAME_PARTICLE_MANAGER_EVENT_SET_CONTROL_POINT_SNAPSHOT = 19;
+	GAME_PARTICLE_MANAGER_EVENT_SET_TEXTURE_ATTRIBUTE = 20;
+	GAME_PARTICLE_MANAGER_EVENT_SET_SCENE_OBJECT_GENERIC_FLAG = 21;
+	GAME_PARTICLE_MANAGER_EVENT_SET_SCENE_OBJECT_TINT_AND_DESAT = 22;
 }
 
 enum EHapticPulseType {
@@ -297,18 +302,22 @@ message CUserMessageCreditsMsg {
 }
 
 message CEntityMessagePlayJingle {
+	optional .CEntityMsg entity_msg = 1;
 }
 
 message CEntityMessageScreenOverlay {
 	optional bool start_effect = 1;
+	optional .CEntityMsg entity_msg = 2;
 }
 
 message CEntityMessageRemoveAllDecals {
 	optional bool remove_decals = 1;
+	optional .CEntityMsg entity_msg = 2;
 }
 
 message CEntityMessagePropagateForce {
 	optional .CMsgVector impulse = 1;
+	optional .CEntityMsg entity_msg = 2;
 }
 
 message CEntityMessageDoSpark {
@@ -319,11 +328,13 @@ message CEntityMessageDoSpark {
 	optional uint32 beams = 5;
 	optional float thick = 6;
 	optional float duration = 7;
+	optional .CEntityMsg entity_msg = 8;
 }
 
 message CEntityMessageFixAngle {
 	optional bool relative = 1;
 	optional .CMsgQAngle angle = 2;
+	optional .CEntityMsg entity_msg = 3;
 }
 
 message CUserMessageCameraTransition {
@@ -346,6 +357,8 @@ message CUserMsg_ParticleManager {
 		optional int32 attach_type = 2;
 		optional int32 entity_handle = 3;
 		optional int32 entity_handle_for_modifiers = 4;
+		optional bool apply_voice_ban_rules = 5;
+		optional int32 team_behavior = 6;
 	}
 
 	message DestroyParticle {
@@ -424,8 +437,32 @@ message CUserMsg_ParticleManager {
 		optional bool check_fow = 1;
 	}
 
+	message SetControlPointModel {
+		optional int32 control_point = 1;
+		optional string model_name = 2;
+	}
+
+	message SetControlPointSnapshot {
+		optional int32 control_point = 1;
+		optional string snapshot_name = 2;
+	}
+
 	message SetParticleText {
 		optional string text = 1;
+	}
+
+	message SetTextureAttribute {
+		optional string attribute_name = 1;
+		optional string texture_name = 2;
+	}
+
+	message SetSceneObjectGenericFlag {
+		optional bool flag_value = 1;
+	}
+
+	message SetSceneObjectTintAndDesat {
+		optional fixed32 tint = 1;
+		optional float desat = 2;
 	}
 
 	required .PARTICLE_MESSAGE type = 1 [default = GAME_PARTICLE_MANAGER_EVENT_CREATE];
@@ -447,6 +484,13 @@ message CUserMsg_ParticleManager {
 	optional .CUserMsg_ParticleManager.SetParticleFoWProperties set_particle_fow_properties = 18;
 	optional .CUserMsg_ParticleManager.SetParticleText set_particle_text = 19;
 	optional .CUserMsg_ParticleManager.SetParticleShouldCheckFoW set_particle_should_check_fow = 20;
+	optional .CUserMsg_ParticleManager.SetControlPointModel set_control_point_model = 21;
+	optional .CUserMsg_ParticleManager.SetControlPointSnapshot set_control_point_snapshot = 22;
+	optional .CUserMsg_ParticleManager.SetTextureAttribute set_texture_attribute = 23;
+	optional .CUserMsg_ParticleManager.SetSceneObjectGenericFlag set_scene_object_generic_flag = 24;
+	optional .CUserMsg_ParticleManager.SetSceneObjectTintAndDesat set_scene_object_tint_and_desat = 25;
+
+	extensions 100 to 201;
 }
 
 message CUserMsg_HudError {
@@ -458,18 +502,20 @@ message CUserMsg_CustomGameEvent {
 	optional bytes data = 2;
 }
 
-message CUserMessageHapticPulse {
+message CUserMessageHapticsManagerPulse {
 	optional int32 hand_id = 1;
-	optional .EHapticPulseType pulse_type = 2 [default = VR_HAND_HAPTIC_PULSE_LIGHT];
+	optional float effect_amplitude = 2;
+	optional float effect_frequency = 3;
+	optional float effect_duration = 4;
 }
 
-message CUserMessageHapticPulsePrecise {
+message CUserMessageHapticsManagerEffect {
 	optional int32 hand_id = 1;
-	optional int32 pulse_duration = 2;
+	optional uint32 effect_name_hash_code = 2;
+	optional float effect_scale = 3;
 }
 
 message CUserMessageAnimStateGraphState {
 	optional int32 entity_index = 1;
 	optional bytes data = 2;
 }
-
