@@ -10,13 +10,14 @@ import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GameMode;
 
 public class LobbyDetailsFactory {
 
-    public static CMsgPracticeLobbySetDetails.Builder createSimpleLobby(String passKey, String name) {
-        return createLobby(passKey, name, null, null, null, null, null, null);
+    public static CMsgPracticeLobbySetDetails.Builder createSimpleLobby(String passKey, String name,
+            Integer seriesType) {
+        return createLobby(passKey, name, null, null, seriesType, null, null, null);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLobbyWithPreviousMatch(String passKey, String name,
-            long matchId, Integer radiantWins, Integer direWins) {
-        return createLobby(passKey, name, null, null, null, matchId, radiantWins, direWins);
+            long matchId, Integer radiantWins, Integer direWins, Integer seriesType) {
+        return createLobby(passKey, name, null, null, seriesType, matchId, radiantWins, direWins);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLeagueNodeLobby(String passKey, String name,

@@ -122,7 +122,7 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgGCPlayerInfoRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgGCPlayerInfoRequest.class, EDOTAGCMsg.k_EMsgGCPlayerInfoRequest_VALUE);
         protobuf.getBody().addPlayerInfosBuilder().setAccountId(accountId).build();
-        getLogger().trace(">>requestPlayerStats: " + protobuf.getBody());
+        getLogger().trace(">>requestPlayerInfo: " + protobuf.getBody());
         return sendCustomAndWait(protobuf, EDOTAGCMsg.k_EMsgGCPlayerInfo_VALUE);
     }
 

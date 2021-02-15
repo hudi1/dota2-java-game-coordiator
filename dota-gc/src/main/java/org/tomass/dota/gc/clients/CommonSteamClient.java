@@ -260,6 +260,8 @@ public class CommonSteamClient extends SteamClient {
 
     @Override
     public void connect() {
+        logger.info("Connecting");
+
         super.connect();
         running = true;
         if (managerLoop == null) {

@@ -16,6 +16,7 @@ import org.tomass.dota.gc.handlers.features.Dota2Party;
 import org.tomass.dota.gc.handlers.features.Dota2Player;
 import org.tomass.dota.gc.handlers.features.Dota2SharedObjects;
 import org.tomass.dota.steam.handlers.Dota2SteamGameCoordinator;
+import org.tomass.dota.steam.handlers.SteamCloud;
 import org.tomass.dota.steam.handlers.SteamUser;
 import org.tomass.protobuf.dota.BaseGcmessages.CMsgGCError;
 import org.tomass.protobuf.dota.BaseGcmessages.EGCBaseMsg;
@@ -57,6 +58,8 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     private SteamUser user;
 
+    private SteamCloud cloud;
+
     private Map<Integer, Consumer<IPacketGCMsg>> dispatchMap;
 
     private ScheduledFunction welcomeFunc;
@@ -91,6 +94,19 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
                     sayHello();
             }
         }, 5000);
+
+        manager.subscribe(NotReadyCallback.class, this::onNotReadyCallback);
+
+    }
+
+    private void onNotReadyCallback(NotReadyCallback callback) {
+        disconnect();
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        connect();
     }
 
     private void handleError(IPacketGCMsg msg) {
@@ -117,12 +133,15 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     private void handleStatus(IPacketGCMsg msg) {
         ClientGCMsgProtobuf<CMsgConnectionStatus.Builder> status = new ClientGCMsgProtobuf<>(CMsgConnectionStatus.class,
                 msg);
+        logger.info("handleStatus " + status.getBody());
         setConnectionStatus(status.getBody().getStatus());
     }
 
     private void handlePlaySessState(IPacketMsg msg) {
         ClientMsgProtobuf<CMsgClientPlayingSessionState.Builder> sessionState = new ClientMsgProtobuf<>(
                 CMsgClientPlayingSessionState.class, msg);
+        logger.info("handlePlaySessState " + sessionState.getBody().getPlayingApp() + "/"
+                + sessionState.getBody().getPlayingBlocked());
 
         if (ready && sessionState.getBody().getPlayingApp() != APP_ID)
             setConnectionStatus(GCConnectionStatus.GCConnectionStatus_NO_SESSION);
@@ -187,6 +206,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     }
 
     private void sayHello() {
+        logger.info("sayHello");
         ClientGCMsgProtobuf<CMsgClientHello.Builder> hello = new ClientGCMsgProtobuf<>(CMsgClientHello.class,
                 EGCBaseClientMsg.k_EMsgGCClientHello_VALUE);
         hello.getBody().setClientSessionNeed(EDOTAGCSessionNeed.k_EDOTAGCSessionNeed_UserInUINeverConnected_VALUE);
@@ -201,6 +221,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         super.init();
         addHandler(gameCoordinator = new Dota2SteamGameCoordinator());
         addHandler(user = new SteamUser());
+        addHandler(cloud = new SteamCloud());
         gameCoordinator.addDota2Handler(sharedObjectsHandler = new Dota2SharedObjects());
         gameCoordinator.addDota2Handler(chatHandler = new Dota2Chat());
         gameCoordinator.addDota2Handler(matchHandler = new Dota2Match());
@@ -260,6 +281,10 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
 
     public boolean isReady() {
         return ready;
+    }
+
+    public SteamCloud getCloud() {
+        return cloud;
     }
 
 }
