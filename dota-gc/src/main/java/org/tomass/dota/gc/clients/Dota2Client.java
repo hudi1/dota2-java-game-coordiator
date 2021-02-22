@@ -79,7 +79,11 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     protected Dota2SharedObjects sharedObjectsHandler;
 
     public Dota2Client(SteamClientConfig config) {
-        super(config);
+        this(config, null);
+    }
+
+    public Dota2Client(SteamClientConfig config, String steamWebApi) {
+        super(config, steamWebApi);
         dispatchMap = new HashMap<>();
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientWelcome_VALUE, packetMsg -> handleWelcome(packetMsg));
         dispatchMap.put(EGCBaseClientMsg.k_EMsgGCClientConnectionStatus_VALUE, packetMsg -> handleStatus(packetMsg));
@@ -93,20 +97,7 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
                 if (!ready)
                     sayHello();
             }
-        }, 5000);
-
-        manager.subscribe(NotReadyCallback.class, this::onNotReadyCallback);
-
-    }
-
-    private void onNotReadyCallback(NotReadyCallback callback) {
-        disconnect();
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        connect();
+        }, 30000);
     }
 
     private void handleError(IPacketGCMsg msg) {
@@ -134,6 +125,11 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
         ClientGCMsgProtobuf<CMsgConnectionStatus.Builder> status = new ClientGCMsgProtobuf<>(CMsgConnectionStatus.class,
                 msg);
         logger.info("handleStatus " + status.getBody());
+        if (GCConnectionStatus.GCConnectionStatus_NO_SESSION_IN_LOGON_QUEUE.equals(status.getBody().getStatus())) {
+            logger.info("QueuePosition/QueueSize/WaitSeconds/EstimatedWaitSecondsRemaining: "
+                    + status.getBody().getQueuePosition() + "/" + status.getBody().getQueueSize() + "/"
+                    + status.getBody().getWaitSeconds() + "/" + status.getBody().getEstimatedWaitSecondsRemaining());
+        }
         setConnectionStatus(status.getBody().getStatus());
     }
 
@@ -187,16 +183,22 @@ public class Dota2Client extends CommonSteamClient implements ClientGCMsgHandler
     }
 
     public void launch() {
-        if (!logged) {
-            return;
+        if (GCConnectionStatus.GCConnectionStatus_NO_SESSION_IN_LOGON_QUEUE.equals(connectionStatus)) {
+            logger.info("Already in logon queue");
+        } else if (!logged) {
+            logger.info("Not logged");
+        } else if (!GCConnectionStatus.GCConnectionStatus_HAVE_SESSION.equals(connectionStatus)) {
+            logger.info("Launching GC");
+            try {
+                user.gamePlayed(APP_ID);
+                welcomeFunc.start();
+            } catch (Exception e) {
+                logger.error("!!launch: ", e);
+            }
+        } else {
+            logger.info("Dota is already online.");
         }
-        logger.info("Launching GC");
-        try {
-            user.gamePlayed(APP_ID);
-            welcomeFunc.start();
-        } catch (Exception e) {
-            logger.error("!!launch: ", e);
-        }
+
     }
 
     public void exit() {

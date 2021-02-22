@@ -20,8 +20,6 @@ public class SteamClientConfig {
 
     private boolean reconnectOnDisconnect;
 
-    private String steamWebApi;
-
     private boolean separateLogger;
 
     public String getUser() {
@@ -96,14 +94,6 @@ public class SteamClientConfig {
         this.personaName = personaName;
     }
 
-    public String getSteamWebApi() {
-        return steamWebApi;
-    }
-
-    public void setSteamWebApi(String steamWebApi) {
-        this.steamWebApi = steamWebApi;
-    }
-
     public boolean isSeparateLogger() {
         return separateLogger;
     }
@@ -117,7 +107,7 @@ public class SteamClientConfig {
         return "SteamClientConfig [user=" + user + ", pass=" + pass + ", authCode=" + authCode + ", twoFactorAuth="
                 + twoFactorAuth + ", loginKey=" + loginKey + ", sentry=" + sentry + ", personaName=" + personaName
                 + ", connectOnStart=" + connectOnStart + ", reconnectOnDisconnect=" + reconnectOnDisconnect
-                + ", steamWebApi=" + steamWebApi + ", separateLogger=" + separateLogger + "]";
+                + ", separateLogger=" + separateLogger + "]";
     }
 
 }

@@ -74,7 +74,11 @@ public class CommonSteamClient extends SteamClient {
     private Marker marker;
 
     public CommonSteamClient(SteamClientConfig config) {
-        super(config.getSteamWebApi() != null ? SteamConfiguration.create(c -> c.withWebAPIKey(config.getSteamWebApi()))
+        this(config, null);
+    }
+
+    public CommonSteamClient(SteamClientConfig config, String steamWebApi) {
+        super(steamWebApi != null ? SteamConfiguration.create(c -> c.withWebAPIKey(steamWebApi))
                 : SteamConfiguration.createDefault());
         this.config = config;
         this.logger = new SteamClientLogger(config.getUser(), config.isSeparateLogger());
