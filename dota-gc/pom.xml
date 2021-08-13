@@ -16,7 +16,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<java.version>1.8</java.version>
-		<version.bouncycastle>1.60</version.bouncycastle>
+		<version.bouncycastle>1.67</version.bouncycastle>
 		<appname>dota2-gc</appname>
 	</properties>
 
