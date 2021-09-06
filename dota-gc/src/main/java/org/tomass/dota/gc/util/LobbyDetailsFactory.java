@@ -12,27 +12,28 @@ public class LobbyDetailsFactory {
 
     public static CMsgPracticeLobbySetDetails.Builder createSimpleLobby(String passKey, String name,
             Integer seriesType) {
-        return createLobby(passKey, name, null, null, seriesType, null, null, null);
+        return createLobby(passKey, name, null, null, seriesType, null, null, null,
+                DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLobbyWithPreviousMatch(String passKey, String name,
-            long matchId, Integer radiantWins, Integer direWins, Integer seriesType) {
-        return createLobby(passKey, name, null, null, seriesType, matchId, radiantWins, direWins);
+            long matchId, Integer radiantWins, Integer direWins, Integer seriesType, Integer gameMode) {
+        return createLobby(passKey, name, null, null, seriesType, gameMode, matchId, radiantWins, direWins);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLeagueNodeLobby(String passKey, String name,
-            Integer leagueId, Integer nodeId, Integer seriesType) {
-        return createLobby(passKey, name, leagueId, nodeId, seriesType, null, null, null);
+            Integer leagueId, Integer nodeId, Integer seriesType, Integer gameMode) {
+        return createLobby(passKey, name, leagueId, nodeId, seriesType, gameMode, null, null, null);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLobby(String passKey, String name, Integer leagueId,
-            Integer nodeId, Integer seriesType, Long matchId, Integer radiantWins, Integer direWins) {
+            Integer nodeId, Integer seriesType, Integer gameMode, Long matchId, Integer radiantWins, Integer direWins) {
         CMsgPracticeLobbySetDetails.Builder details = CMsgPracticeLobbySetDetails.newBuilder();
         details.setAllowCheats(false).setDotaTvDelay(LobbyDotaTVDelay.LobbyDotaTV_120)
                 .setGameName(name == null ? UUID.randomUUID().toString() : name)
                 .setVisibility(DOTALobbyVisibility.DOTALobbyVisibility_Public)
                 .setServerRegion(ServerRegions.EUROPE.getNumber()).setPassKey(passKey).setAllowSpectating(true)
-                .setGameMode(DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE)
+                .setGameMode(gameMode)
                 .setSelectionPriorityRules(DOTASelectionPriorityRules.k_DOTASelectionPriorityRules_Automatic);
         if (leagueId != null) {
             details.setLeagueid(leagueId);

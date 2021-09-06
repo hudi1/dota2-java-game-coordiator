@@ -14,6 +14,7 @@ import in.dragonbra.javasteam.base.IClientGCMsg;
 import in.dragonbra.javasteam.base.IPacketGCMsg;
 import in.dragonbra.javasteam.base.IPacketMsg;
 import in.dragonbra.javasteam.enums.EMsg;
+import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver.CMsgClientP2PConnectionInfo;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceInfo;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgClientRichPresenceRequest;
 import in.dragonbra.javasteam.protobufs.steamclient.SteammessagesClientserver2.CMsgGCClient;
@@ -33,6 +34,13 @@ public class Dota2SteamGameCoordinator extends SteamGameCoordinator {
         dispatchMap = new HashMap<>();
         dispatchMap.put(EMsg.ClientFromGC, packetMsg -> handleFromGC(packetMsg));
         dispatchMap.put(EMsg.ClientRichPresenceInfo, packetMsg -> handleRichPresenceInfo(packetMsg));
+        dispatchMap.put(EMsg.ClientP2PConnectionInfo, packetMsg -> handleConnectionInfo(packetMsg));
+    }
+
+    private void handleConnectionInfo(IPacketMsg packetMsg) {
+        ClientMsgProtobuf<CMsgClientP2PConnectionInfo.Builder> protobuf = new ClientMsgProtobuf<>(
+                CMsgClientP2PConnectionInfo.class, packetMsg);
+        getLogger().trace(">>handleConnectionInfo: " + protobuf.getBody());
     }
 
     private void handleRichPresenceInfo(IPacketMsg packetMsg) {

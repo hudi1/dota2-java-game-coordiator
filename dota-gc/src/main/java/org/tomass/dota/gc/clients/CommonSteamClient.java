@@ -136,10 +136,12 @@ public class CommonSteamClient extends SteamClient {
     }
 
     private void onDisconnected(DisconnectedCallback callback) {
+        logger.info("onDisconnected" + callback.isUserInitiated());
+
         if (config.isReconnectOnDisconnect() && !callback.isUserInitiated()) {
-            logger.info("Disconnected from Steam, reconnecting in 5...");
+            logger.info("Disconnected from Steam, reconnecting in 30...");
             try {
-                Thread.sleep(5000L);
+                Thread.sleep(30000L);
             } catch (InterruptedException e) {
             }
             connect();
@@ -165,7 +167,7 @@ public class CommonSteamClient extends SteamClient {
             if (EResult.ServiceUnavailable.equals(callback.getResult())
                     || EResult.TryAnotherCM.equals(callback.getResult())) {
                 try {
-                    Thread.sleep(5000L);
+                    Thread.sleep(30000L);
                 } catch (InterruptedException e) {
                 }
                 if (running == false)
@@ -269,6 +271,7 @@ public class CommonSteamClient extends SteamClient {
         super.connect();
         running = true;
         if (managerLoop == null) {
+            logger.info("managerLoop");
             managerLoop = CompletableFuture.runAsync(new Runnable() {
                 @Override
                 public void run() {
@@ -282,6 +285,7 @@ public class CommonSteamClient extends SteamClient {
                 }
             });
         }
+        logger.info("Connected");
     }
 
     @Override
