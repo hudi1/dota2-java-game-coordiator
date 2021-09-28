@@ -6,14 +6,12 @@ import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgPractice
 import org.tomass.protobuf.dota.DotaGcmessagesCommonMatchManagement.LobbyDotaTVDelay;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTALobbyVisibility;
 import org.tomass.protobuf.dota.DotaSharedEnums.DOTASelectionPriorityRules;
-import org.tomass.protobuf.dota.DotaSharedEnums.DOTA_GameMode;
 
 public class LobbyDetailsFactory {
 
-    public static CMsgPracticeLobbySetDetails.Builder createSimpleLobby(String passKey, String name,
-            Integer seriesType) {
-        return createLobby(passKey, name, null, null, seriesType, null, null, null,
-                DOTA_GameMode.DOTA_GAMEMODE_CM_VALUE);
+    public static CMsgPracticeLobbySetDetails.Builder createSimpleLobby(String passKey, String name, Integer seriesType,
+            Integer gameMode) {
+        return createLobby(passKey, name, null, null, seriesType, gameMode, null, null, null);
     }
 
     public static CMsgPracticeLobbySetDetails.Builder createLobbyWithPreviousMatch(String passKey, String name,
