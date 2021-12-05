@@ -28,6 +28,7 @@ import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgBalancedShuffleLobby;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTADestroyLobbyRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgFlipLobbyTeams;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgAbandonCurrentGame;
+import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgApplyTeamToPracticeLobby;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgFriendPracticeLobbyListRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgFriendPracticeLobbyListResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClientMatchManagement.CMsgLobbyList;
@@ -442,6 +443,17 @@ public class Dota2Lobby extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgDOTADestroyLobbyRequest.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTADestroyLobbyRequest.class, EDOTAGCMsg.k_EMsgDestroyLobbyRequest_VALUE);
         getLogger().trace(">>destroyLobby: " + protobuf.getBody());
+        send(protobuf);
+    }
+
+    public void applyTeamToPracticeLobby(int teamId) {
+        if (lobby == null) {
+            return;
+        }
+        ClientGCMsgProtobuf<CMsgApplyTeamToPracticeLobby.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgApplyTeamToPracticeLobby.class, EDOTAGCMsg.k_EMsgGCApplyTeamToPracticeLobby_VALUE);
+        protobuf.getBody().setTeamId(teamId);
+        getLogger().trace(">>applyTeamToPracticeLobby: " + protobuf.getBody());
         send(protobuf);
     }
 
