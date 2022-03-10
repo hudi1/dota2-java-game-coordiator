@@ -45,7 +45,6 @@ public class Dota2Player extends Dota2ClientGCMsgHandler {
                 packetMsg -> handleProfileCardResponse(packetMsg));
         dispatchMap.put(EDOTAGCMsg.k_EMsgGCToClientPlayerStatsResponse_VALUE,
                 packetMsg -> handlePlayerStats(packetMsg));
-
     }
 
     private void handlePlayerInfo(IPacketGCMsg msg) {

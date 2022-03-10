@@ -13,6 +13,7 @@ import org.tomass.dota.gc.handlers.callbacks.match.MatchesMinimalCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.RequestMatchesCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.TopSourceTvGamesCallback;
 import org.tomass.dota.gc.handlers.callbacks.match.WatchGameCallback;
+import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAGetPlayerMatchHistory;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAGetPlayerMatchHistoryResponse;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAMatchmakingStatsRequest;
 import org.tomass.protobuf.dota.DotaGcmessagesClient.CMsgDOTAMatchmakingStatsResponse;
@@ -82,7 +83,7 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
         ClientGCMsgProtobuf<CMsgDOTAGetPlayerMatchHistoryResponse.Builder> protobuf = new ClientGCMsgProtobuf<>(
                 CMsgDOTAGetPlayerMatchHistoryResponse.class, msg);
         getLogger().trace(">>handlePlayerMatchHistory: " + protobuf.getBody());
-        client.postCallback(new MatchHistoryCallback(protobuf.getBody()));
+        client.postCallback(new MatchHistoryCallback(protobuf.getTargetJobID(), protobuf.getBody()));
     }
 
     private void handleMatches(IPacketGCMsg data) {
@@ -179,6 +180,20 @@ public class Dota2Match extends Dota2ClientGCMsgHandler {
                 CMsgGCMatchDetailsRequest.class, EDOTAGCMsg.k_EMsgGCMatchDetailsRequest_VALUE);
         protobuf.getBody().setMatchId(matchId);
         getLogger().trace(">>requestMatchDetails: " + protobuf.getBody());
+        return sendJobAndWait(protobuf);
+    }
+
+    public MatchHistoryCallback requestPlayerMatch(Integer accountId, Long startMatchId) {
+        ClientGCMsgProtobuf<CMsgDOTAGetPlayerMatchHistory.Builder> protobuf = new ClientGCMsgProtobuf<>(
+                CMsgDOTAGetPlayerMatchHistoryResponse.class, EDOTAGCMsg.k_EMsgDOTAGetPlayerMatchHistory_VALUE);
+        protobuf.getBody().setAccountId(accountId);
+        if (startMatchId != null) {
+            protobuf.getBody().setStartAtMatchId(startMatchId);
+            protobuf.getBody().setMatchesRequested(10);
+        } else {
+            protobuf.getBody().setMatchesRequested(1); 
+        }
+        getLogger().trace(">>requestPlayerMatch: " + protobuf.getBody());
         return sendJobAndWait(protobuf);
     }
 
